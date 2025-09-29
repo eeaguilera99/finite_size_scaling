@@ -81,7 +81,6 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
     # Minimize
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
-    println(string(res.minimum, " = minimum cost with shifts "))
     return res, shifts, X, Y, Yerr
 end
 
