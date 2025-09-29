@@ -54,7 +54,7 @@ function fit_xi_offset_vsK(K_vals, xi, xi_err;
         A0, ν0, ξ00 = maximum(xi), 1.5, minimum(xi)*0.5
         res = optimize(p -> sse_offset(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
                        [log(A0), log(ν0), log(ξ00)],
-                       NelderMead(); Optim.Options(iterations=2000))
+                       NelderMead(), Optim.Options(iterations=2000))
         A = exp(Optim.minimizer(res)[1])
         ν = exp(Optim.minimizer(res)[2])
         ξ0 = exp(Optim.minimizer(res)[3])
@@ -92,7 +92,7 @@ function fit_xi_offset_vsK(K_vals, xi, xi_err;
             end
             res = optimize(p -> sse_b(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
                            [log(best.A), log(best.ν), log(best.ξ0)],
-                           NelderMead(); Optim.Options(iterations=1000))
+                           NelderMead(), Optim.Options(iterations=1000))
             A = exp(Optim.minimizer(res)[1])
             ν = exp(Optim.minimizer(res)[2])
             ξ0 = exp(Optim.minimizer(res)[3])
