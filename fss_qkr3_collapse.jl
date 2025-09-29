@@ -81,13 +81,13 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
     # Minimize
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
-
-    return shifts, X, Y, Yerr
+    println(string(res.minimum, " = minimum cost with shifts "))
+    return res, shifts, X, Y, Yerr
 end
 
 
 # Perform collapse
-shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat)
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat)
 
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",
@@ -106,3 +106,5 @@ end
 display(plt2)
 
 println("Optimal shifts ln ξ(K): ", shifts)
+println("Fit quality: ", res.minimum)
+
