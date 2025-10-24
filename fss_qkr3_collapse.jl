@@ -21,22 +21,22 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `shifts::Vector`: Optimal horizontal shifts aᵢ = ln ξ(Kᵢ).
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
-K_vals = vec(Matrix(CSV.read("data/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-p2_err_mat = Matrix(CSV.read("data/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+K_vals = vec(Matrix(CSV.read("data2/kappa.csv", DataFrame; header=false)))             # Kick strengths
+t_vals = vec(Matrix(CSV.read("data2/number_of_kicks.csv", DataFrame; header=false)))  # Times
+p2_mat = Matrix(CSV.read("data2/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
+p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
-d = 3  # spatial dimension
+dim = 2  # spatial dimension
 
 #filter Nkicks range
 n_Nkicks_i = 4 #index to start from
-n_Nkicks_f = size(t_vals,1)-5 #index to end at
+n_Nkicks_f = size(t_vals,1) #index to end at
 t_vals = t_vals[n_Nkicks_i:n_Nkicks_f]
 p2_mat = p2_mat[:,n_Nkicks_i:n_Nkicks_f]
 p2_err_mat = p2_err_mat[:,n_Nkicks_i:n_Nkicks_f]
 
 
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30, d)
     M, N = size(p2_mat)
 
     # Observable: Λ = <p^2>/t^(2/3)
@@ -85,25 +85,5 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
 end
 
 
-# Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat)
 
-# Plot before collapse
-plt1 = plot(title="Raw data (before shifts)",
-    xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
-for (i,K) in enumerate(K_vals)
-    plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
-end
-display(plt1)
-
-# Plot after collapse
-plt2 = plot(title="Data collapse (after optimal shifts)",
-    xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
-for (i,K) in enumerate(K_vals)
-    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
-end
-display(plt2)
-
-println("Optimal shifts ln ξ(K): ", shifts)
-println("Fit quality: ", res.minimum)
 

@@ -29,6 +29,29 @@ Returns NamedTuple with:
   Kc, ν, A, ξ0, sse,
   err_Kc, err_ν, err_A, err_ξ0
 """
+
+# Perform collapse
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim)
+
+# Plot before collapse
+plt1 = plot(title="Raw data (before shifts)",
+    xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
+for (i,K) in enumerate(K_vals)
+    plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
+end
+display(plt1)
+
+# Plot after collapse
+plt2 = plot(title="Data collapse (after optimal shifts)",
+    xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
+for (i,K) in enumerate(K_vals)
+    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
+end
+display(plt2)
+
+#println("Optimal shifts ln ξ(K): ", shifts)
+println("Fit quality: ", res.minimum)
+
 function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
                            nboot=200, rng=Random.GLOBAL_RNG,
                            plotshow=true)
@@ -142,6 +165,6 @@ println("\n===== Critical fit results with offset and error bars =====")
 println("Kc  ≈ $(res.Kc)  ± $(res.err_Kc)")
 println("ν   ≈ $(res.ν)   ± $(res.err_ν)")
 println("A   ≈ $(res.A)   ± $(res.err_A)")
-println("ξ0  ≈ $(res.ξ0)  ± $(res.err_ξ0)")
+println("ξ_0  ≈ $(res.ξ0)  ± $(res.err_ξ0)")
 
 
