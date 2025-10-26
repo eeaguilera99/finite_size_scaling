@@ -20,7 +20,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 dim = 2.3  # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim)
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
 
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",

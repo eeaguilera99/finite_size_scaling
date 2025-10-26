@@ -10,15 +10,16 @@ t_vals = vec(Matrix(CSV.read("data2/number_of_kicks.csv", DataFrame; header=fals
 p2_mat = Matrix(CSV.read("data2/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
 p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
-#filter Nkicks range
-n_Nkicks_i = 6 #index to start from
-n_Nkicks_f = size(t_vals,1) #index to end at
-t_vals = t_vals[n_Nkicks_i:n_Nkicks_f]
-p2_mat = p2_mat[:,n_Nkicks_i:n_Nkicks_f]
-p2_err_mat = p2_err_mat[:,n_Nkicks_i:n_Nkicks_f]
 
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d)
+
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
     
+    #filter Nkicks range
+    n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
+    t_vals = t_vals[n_kicks_i:n_Nkicks_f]
+    p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
+    p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
+
     M, N = size(p2_mat)
 
     # Observable: Λ = <p^2>/t^(2/3)

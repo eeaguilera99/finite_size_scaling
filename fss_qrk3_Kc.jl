@@ -1,4 +1,4 @@
-include("fss_qkr3_collapse.jl")  # for finite_time_scaling
+include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 using Statistics
 using Optim
@@ -29,9 +29,9 @@ Returns NamedTuple with:
   Kc, ν, A, ξ0, sse,
   err_Kc, err_ν, err_A, err_ξ0
 """
-
+d= 2.3  # spatial dimension
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim)
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
 
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",
