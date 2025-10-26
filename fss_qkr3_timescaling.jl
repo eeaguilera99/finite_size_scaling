@@ -72,24 +72,12 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
 
-        # ---- Collapse quality metric: scatter in shifted X within Y-bins ----
-    function collapse_scatter_X_given_Y(shifts, X)
-        Xp = X .+ shifts              # shifted abscissas
-        totw, totvar = 0.0, 0.0
-        for b in 1:nbins
-            mask = (bin_ids .== b)
-            nb = count(mask)
-            if nb > 1
-                xb = vec(Xp)[mask]
-                totvar += var(xb) * nb
-                totw   += nb
-            end
-        end
-        sX = sqrt(totvar / max(totw, 1.0))
-        sX_rel = sX / (maximum(vec(Xp)) - minimum(vec(Xp)) + eps())
-        return sX, sX_rel
-    end
+    # === Compute normalized scatter directly from res.minimum ===
+    total_points = M * N
+    sX = sqrt(res.minimum / total_points)
+    Xp = X .+ shifts                     # shifted X matrix
+    sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
-    sX, sX_rel = collapse_scatter_X_given_Y(shifts, X)
+    # === Return everything
     return res, shifts, X, Y, Yerr, sX, sX_rel
 end
