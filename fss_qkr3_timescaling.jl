@@ -17,7 +17,7 @@ t_vals = t_vals[n_Nkicks_i:n_Nkicks_f]
 p2_mat = p2_mat[:,n_Nkicks_i:n_Nkicks_f]
 p2_err_mat = p2_err_mat[:,n_Nkicks_i:n_Nkicks_f]
 
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30, d)
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d)
     
     M, N = size(p2_mat)
 
@@ -26,25 +26,32 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30, d)
     Λ_err = p2_err_mat ./ (t_vals' .^ (2/d))
 
     # Log variables
-    X = -log.(t_vals') ./ 3    # 1×N
+    X = -log.(t_vals') ./ d    # 1×N
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
     Yerr = Λ_err ./ Λ
 
     # Flatten for binning
     allY = vec(Y)
-    y_min, y_max = minimum(allY), maximum(allY)
+    y_min, y_max = minimum(allY), maximum(allY) #range of data Yaxis
     bins = range(y_min, y_max; length=nbins+1)
-    bin_ids = [searchsortedlast(bins, y) for y in allY]
+    bin_ids = [searchsortedlast(bins, y) for y in allY] #assigns each y-value to a bin number from 1 to nbins
 
     # Cost function: variance of shifted X within Y-bins
     function cost(a_full::Vector)
+        # Shift X values by the amount specified in a_full
         shiftedX = vec(X .+ a_full .* ones(1,N))
+        
         total_var = 0.0
         for b in 1:nbins
+            # Find all points that fall in bin b
             mask = (bin_ids .== b)
+            
+            # Only consider bins with more than 1 point
             if count(mask) > 1
+                # Get X values for points in this bin
                 xb = shiftedX[mask]
+                # Add weighted variance of X values in this bin
                 total_var += var(xb) * count(mask)
             end
         end
