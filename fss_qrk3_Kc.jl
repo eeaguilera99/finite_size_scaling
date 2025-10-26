@@ -31,15 +31,16 @@ Returns NamedTuple with:
 """
 d= 2.3  # spatial dimension
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
+res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
 
+#=
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",
     xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
 for (i,K) in enumerate(K_vals)
     plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
 end
-display(plt1)
+display(plt1)=#
 
 # Plot after collapse
 plt2 = plot(title="Data collapse (after optimal shifts)",
@@ -49,8 +50,6 @@ for (i,K) in enumerate(K_vals)
 end
 display(plt2)
 
-#println("Optimal shifts ln ξ(K): ", shifts)
-println("Fit quality: ", res.minimum)
 
 function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
                            nboot=200, rng=Random.GLOBAL_RNG,
@@ -166,5 +165,5 @@ println("Kc  ≈ $(res.Kc)  ± $(res.err_Kc)")
 println("ν   ≈ $(res.ν)   ± $(res.err_ν)")
 println("A   ≈ $(res.A)   ± $(res.err_A)")
 println("ξ_0  ≈ $(res.ξ0)  ± $(res.err_ξ0)")
-
+println("Fit quality: ", s_rel)
 
