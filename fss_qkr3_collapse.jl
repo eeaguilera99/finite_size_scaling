@@ -21,14 +21,14 @@ dim = 2.3  # spatial dimension
 
 # Perform collapse
 res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
-
+#=
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",
     xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
 for (i,K) in enumerate(K_vals)
     plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end
-display(plt1)
+display(plt1)=#
 
 # Plot after collapse
 plt2 = plot(title="Data collapse (after optimal shifts)",
