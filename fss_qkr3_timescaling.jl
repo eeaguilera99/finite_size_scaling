@@ -81,3 +81,28 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     # === Return everything
     return res, shifts, X, Y, Yerr, sX_rel
 end
+
+function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
+    Xp = vec(X .+ a_full .* ones(1,size(X,2)))
+    
+    # Flatten for binning
+    allY = vec(Y)
+    y_min, y_max = minimum(allY), maximum(allY) #range of data Yaxis
+    bins = range(y_min, y_max; length=nbins+1)
+    bin_ids = [searchsortedlast(bins, y) for y in allY]
+
+    totw, totvar = 0.0, 0.0
+    for b in 1:nbins
+        mask = (bin_ids .== b)
+        nb = count(mask)
+        if nb > 1
+            xb = vec(Xp)[mask]
+            totvar += var(xb) * nb
+            totw   += nb
+        end
+    end
+    sX = sqrt(totvar / max(totw, 1.0))
+    sX_rel = sX / (maximum(vec(Xp)) - minimum(vec(Xp)) + eps())
+
+    return totvar, sX_rel
+end
