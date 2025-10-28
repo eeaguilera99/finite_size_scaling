@@ -40,10 +40,10 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         plt_raw = plot(K_vals, xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)", title="Raw ξ(K) data", label="data")
         display(plt_raw)
-
+        
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
-        ξfit_model = model(pbest, Kgrid)
+        ξfit_model = model(Kgrid, pbest)
         plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="ξ(K) with offset fit (LsqFit.jl)", label="data")
@@ -57,7 +57,6 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
 end
 
 
-
 dim = 3  # spatial dimension
 
 # Perform collapse
@@ -66,23 +65,6 @@ res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat
 # ===== Example usage =====
 xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)
-#=
-model(K, p) = p[1] .+ p[2] .* abs.(K .- p[4]).^(-p[3]) 
-ξ0₀ = minimum(xi)*0.5
-A₀  = maximum(xi)
-ν₀  = 1.5
-Kc₀ = K_vals[argmax(xi)]  # where ξ is largest
-p0 = [ξ0₀, A₀, ν₀, Kc₀]
-exclude_tol_frac=0.02
-
-# Mask out values too close to trial Kc₀
-ΔK = maximum(K_vals) - minimum(K_vals)
-mask = abs.(K_vals .- Kc₀) .> exclude_tol_frac*ΔK
-Kfit, ξfit = K_vals[mask], xi[mask]
-
-fit = curve_fit(model, Kfit, ξfit, p0)
-=#
-
 #println(results)
 
 
