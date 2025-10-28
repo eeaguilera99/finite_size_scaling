@@ -29,26 +29,6 @@ Returns NamedTuple with:
   Kc, ν, A, ξ0, sse,
   err_Kc, err_ν, err_A, err_ξ0
 """
-d= 2.3  # spatial dimension
-# Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=6)
-
-#=
-# Plot before collapse
-plt1 = plot(title="Raw data (before shifts)",
-    xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
-for (i,K) in enumerate(K_vals)
-    plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
-end
-display(plt1)=#
-
-# Plot after collapse
-plt2 = plot(title="Data collapse (after optimal shifts)",
-    xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
-for (i,K) in enumerate(K_vals)
-    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
-end
-display(plt2)
 
 
 function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
@@ -155,6 +135,27 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
             err_Kc=err_Kc, err_ν=err_ν, err_A=err_A, err_ξ0=err_ξ0,
             sse = best.sse)
 end
+
+d=3  # spatial dimension
+# Perform collapse
+res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
+
+#=
+# Plot before collapse
+plt1 = plot(title="Raw data (before shifts)",
+    xlabel="ln(t^(-1/3))", ylabel="ln(Λ)")
+for (i,K) in enumerate(K_vals)
+    plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
+end
+display(plt1)=#
+
+# Plot after collapse
+plt2 = plot(title="Data collapse (after optimal shifts)",
+    xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
+for (i,K) in enumerate(K_vals)
+    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
+end
+display(plt2)
 
 # ===== Example usage (after you have shifts) =====
 xi = exp.(shifts)
