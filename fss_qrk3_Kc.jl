@@ -136,7 +136,7 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
             sse = best.sse)
 end
 
-d=3  # spatial dimension
+dim=2  # spatial dimension
 # Perform collapse
 res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
 
