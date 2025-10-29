@@ -1,8 +1,5 @@
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
-using Statistics
-using Optim
-using Plots
 using Random
 
 """
@@ -136,7 +133,7 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
             sse = best.sse)
 end
 
-dim=2  # spatial dimension
+dim=3  # spatial dimension
 # Perform collapse
 res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
 
@@ -153,7 +150,7 @@ display(plt1)=#
 plt2 = plot(title="Data collapse (after optimal shifts)",
     xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
 for (i,K) in enumerate(K_vals)
-    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
+    plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end
 display(plt2)
 
