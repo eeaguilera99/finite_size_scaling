@@ -2,16 +2,18 @@ include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 #code to loop over dimension values for best collapse
 
-d_values = 0:0.05:10
+d_values = 1.5:0.05:3
 
 collapse_quality_1 = Float64[]
 collapse_quality_2 = Float64[]
+collapse_quality_3 = Float64[]
 #shift_dict = Dict{Float64, Vector{Float64}}()
 
 for dim in d_values
     l_res, l_shifts, l_X, l_Y, l_Y_err, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
-    push!(collapse_quality_1, tot_sdeviation(l_shifts.*0, l_X, l_Y)[1]/tot_sdeviation(l_shifts, l_X, l_Y)[1])
-    push!(collapse_quality_2, sX)
+    push!(collapse_quality_1, sX)
+    push!(collapse_quality_2, tot_sdeviation(l_shifts.*0, l_X, l_Y)[1]/tot_sdeviation(l_shifts, l_X, l_Y)[1])
+    push!(collapse_quality_3, tot_sdeviation(l_shifts, l_X, l_Y)[1])
 end
 
 
@@ -35,7 +37,7 @@ end
 
 dim_scan(collapse_quality_1)
 dim_scan(collapse_quality_2)
-
+dim_scan(collapse_quality_3)
 #=
 # Optional: Plot best collapse curves
 plt_best = plot(title="Best Data Collapse (d = $(round(best_d, digits=2)))",
