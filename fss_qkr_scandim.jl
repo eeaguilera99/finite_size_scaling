@@ -2,13 +2,13 @@ include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 #code to loop over dimension values for best collapse
 
-d_values = 2:0.05:7
+d_values = 2:0.05:3
 
 collapse_quality = Float64[]
 #shift_dict = Dict{Float64, Vector{Float64}}()
 
 for dim in d_values
-    l_res, l_shifts, l_X, l_Y, l_Y_err, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=1)
+    l_res, l_shifts, l_X, l_Y, l_Y_err, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
     push!(collapse_quality, sX)
 end
 
