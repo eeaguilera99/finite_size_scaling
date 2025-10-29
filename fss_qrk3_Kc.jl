@@ -66,4 +66,10 @@ xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)
 #println(results)
 
+println("\n===== Critical fit results with offset and error bars =====")
+println("Kc  ≈ $(results.Kc)  ± $(results.err_Kc)")
+println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
+println("A   ≈ $(results.A)   ± $(results.err_A)")
+println("ξ_0  ≈ $(results.ξ0)  ± $(results.err_ξ0)")
+println("Fit quality: ", s_rel)
 
