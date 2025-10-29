@@ -17,7 +17,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
-dim = 3  # spatial dimension
+dim = 10  # spatial dimension
 
 # Perform collapse
 res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
