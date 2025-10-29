@@ -39,10 +39,10 @@ end
 display(plt2)
 
 #quality factors
-var_0 = tot_variance(shifts.*0, X, Y)[1]
-var_f = tot_variance(shifts, X, Y)[1]
-q_1 = var_f / var_0
-q_2 = 1/s_rel
+sX_0 = tot_sdeviation(shifts.*0, X, Y)[1] #initial average std dev
+sX_f = tot_sdeviation(shifts, X, Y)[1] #final average std dev after shifts
+s_1 = sX_f / sX_0
+s_2 = s_rel
 
 println("Fit quality: ", s_rel)
-println("Quality factors: q_1 = ", q_1, ", q_2 = ", q_2)
+println("Quality factors: s_1 = ", s_1, ", s_2 = ", s_2)
