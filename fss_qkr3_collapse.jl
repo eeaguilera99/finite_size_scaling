@@ -17,10 +17,10 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
-dim = 2.3  # spatial dimension
+dim = 3  # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=7)
+res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
 #=
 # Plot before collapse
 plt1 = plot(title="Raw data (before shifts)",
@@ -38,6 +38,11 @@ for (i,K) in enumerate(K_vals)
 end
 display(plt2)
 
-#println("Optimal shifts ln ξ(K): ", shifts)
-println("Fit quality: ", s_rel)
+#quality factors
+var_0 = tot_variance(shifts.*0, X, Y)[1]
+var_f = tot_variance(shifts, X, Y)[1]
+q_1 = var_f / var_0
+q_2 = 1/s_rel
 
+println("Fit quality: ", s_rel)
+println("Quality factors: q_1 = ", q_1, ", q_2 = ", q_2)

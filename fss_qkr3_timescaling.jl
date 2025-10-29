@@ -82,7 +82,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     return res, shifts, X, Y, Yerr, sX_rel
 end
 
-function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
+function tot_sdeviation(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
     Xp = vec(X .+ a_full .* ones(1,size(X,2)))
     
     # Flatten for binning
@@ -104,5 +104,5 @@ function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculat
     sX = sqrt(totvar / max(totw, 1.0))
     sX_rel = sX / (maximum(vec(Xp)) - minimum(vec(Xp)) + eps())
 
-    return totvar, sX_rel
+    return sX, sX_rel
 end
