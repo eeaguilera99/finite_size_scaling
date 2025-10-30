@@ -28,7 +28,7 @@ Returns NamedTuple with:
 """
 
 
-function fit_xi_offset_vsK(K_vals, xi; ngrid=300, exclude_tol_frac=0.02,
+function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
                            nboot=200, rng=Random.GLOBAL_RNG,
                            plotshow=true)
 
