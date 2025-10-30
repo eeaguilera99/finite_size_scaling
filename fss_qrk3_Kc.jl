@@ -10,7 +10,7 @@ Returns best-fit parameters + standard errors from covariance matrix.
 """
 function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     # Model function
-    model(K, p) = p[1] .+ p[2] .* abs.(K .- p[4]).^(-p[3])   # ξ₀ + A|K−Kc|^{−ν}
+    model(K, p) = exp(p[1]) .+ exp(p[2]) .* abs.(K .- p[4]).^(-exp(p[3]))   # ξ₀ + A|K−Kc|^{−ν}
     names = ["ξ₀", "A", "ν", "Kc"]
 
     # Initial guess
@@ -18,7 +18,7 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     A₀  = maximum(xi)
     ν₀  = 1.5
     Kc₀ = K_vals[argmax(xi)]  # where ξ is largest
-    p0 = [ξ0₀, A₀, ν₀, Kc₀]
+    p0 = log.([ξ0₀, A₀, ν₀, Kc₀])
 
     # Mask out values too close to trial Kc₀
     ΔK = maximum(K_vals) - minimum(K_vals)
