@@ -15,7 +15,8 @@ p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false)
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
     
     #filter Nkicks range
-
+    n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
+    t_vals = t_vals[n_kicks_i:n_Nkicks_f]
     p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
     p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
 
