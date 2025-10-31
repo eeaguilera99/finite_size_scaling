@@ -57,8 +57,8 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
         ν0 = 1.5
         ξ00 = minimum(xi) * 0.5
 
-        res = optimize(p -> sse_offset(Kc, p[1], p[2], p[3]),
-                       [A0, ν0, ξ00],
+        res = optimize(p -> sse_offset(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
+                       [log(A0), log(ν0), log(ξ00)],
                             NelderMead(), Optim.Options(iterations=2000))
         A = exp(Optim.minimizer(res)[1])
         ν = exp(Optim.minimizer(res)[2])
@@ -86,10 +86,10 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
                                 if count(mask) < 3
                                     return 1e12
                                 end
-                                pred = p[3] .+ p[1] .* dK.^(-p[2])
+                                pred = exp(p[3]) .+ exp(p[1]) .* dK.^(-exp(p[2]))
                                 return sum((xib[mask] .- pred[mask]).^2)
                             end,
-                            [A0, ν0, ξ00],
+                            [log(A0), log(ν0), log(ξ00)],
                             NelderMead(), Optim.Options(iterations=1000))
             A = exp(Optim.minimizer(res)[1])
             ν = exp(Optim.minimizer(res)[2])
@@ -109,23 +109,21 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
     err_ξ0 = std(boot_params[:,4])
 
     if plotshow && isfinite(best.Kc)
-        #=
         # 1) Plot raw ξ(K) vs K (no fit)
         plt_raw = plot(K_vals, xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="Raw ξ(K) data", label="data")
-        display(plt_raw)=#
+        display(plt_raw)
 
         # 2) Plot fit with divergence
-        Kgrid = range(Kmin, Kmax, length=400)
-        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
-        plt_fit = plot(Kgrid, ξfit, seriestype=:scatter, ms=6,
+        plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="ξ(K) with offset, Kc ≈ $(round(best.Kc,digits=5))",
                        label="data")
-        println(ξfit)
-        #plot!(plt_fit, Kgrid, , lw=2,
-        #      label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
+        Kgrid = range(Kmin, Kmax, length=400)
+        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
+        plot!(plt_fit, Kgrid, ξfit, lw=2,
+              label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
         vline!(plt_fit, [best.Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
