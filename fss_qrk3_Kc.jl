@@ -7,7 +7,7 @@ using Random
                       nboot=200, rng=Random.GLOBAL_RNG,
                       plotshow=true)
 
-Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} and plot ξ vs K.
+Fit 1/ξ(K) = β0 + A * |K - Kc|^{ν} and plot ξ vs K.
 
 - Uses grid search on Kc, nonlinear optimization for A, ν, ξ0.
 - Returns best-fit parameters + bootstrap error estimates.
@@ -36,37 +36,39 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
     ΔK = Kmax - Kmin
     Kc_grid = range(Kmin + 0.05ΔK, Kmax - 0.05ΔK, length=ngrid)
 
+    xi = (1)./xi
+
     # SSE for given params
-    function sse_offset(Kc, A, ν, ξ0)
+    function sse_offset(Kc, A, ν, β0)
         dK = abs.(K_vals .- Kc)
-        mask = (dK .> exclude_tol_frac*ΔK) .& (xi .> ξ0)
+        mask = (dK .> exclude_tol_frac*ΔK) .& (xi .> β0)
         if count(mask) < 3
             return 1e12
         end
-        pred = ξ0 .+ A .* dK.^(-ν)
+        pred = β0 .+ A .* dK.^(ν)
         return sum((xi[mask] .- pred[mask]).^2)
     end
 
     # Best-fit container
-    best = (sse = Inf, Kc = NaN, A = NaN, ν = NaN, ξ0 = NaN)
+    best = (sse = Inf, Kc = NaN, A = NaN, ν = NaN, β0 = NaN)
 
     # Grid search over Kc
     for Kc in Kc_grid
         # crude initial guesses
         A0 = maximum(xi)
         ν0 = 1.5
-        ξ00 = minimum(xi) * 0.5
+        β00 = minimum(xi) * 0.5
 
         res = optimize(p -> sse_offset(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
-                       [log(A0), log(ν0), log(ξ00)],
+                       [log(A0), log(ν0), log(β00)],
                             NelderMead(), Optim.Options(iterations=2000))
         A = exp(Optim.minimizer(res)[1])
         ν = exp(Optim.minimizer(res)[2])
-        ξ0 = exp(Optim.minimizer(res)[3])
+        β0 = exp(Optim.minimizer(res)[3])
         sse = Optim.minimum(res)
 
         if sse < best.sse && ν > 0
-            best = (sse=sse, Kc=Kc, A=A, ν=ν, ξ0=ξ0)
+            best = (sse=sse, Kc=Kc, A=A, ν=ν, β0=β0)
         end
     end
 
@@ -77,59 +79,59 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
         Kb, xib = K_vals[idx], xi[idx]
 
         # inner fit
-        local_best = (sse = Inf, Kc = NaN, A = NaN, ν = NaN, ξ0 = NaN)
+        local_best = (sse = Inf, Kc = NaN, A = NaN, ν = NaN, β0 = NaN)
         for Kc in Kc_grid
-            A0, ν0, ξ00 = maximum(xib), 1.5, minimum(xib)*0.5
+            A0, ν0, β00 = maximum(xib), 1.5, minimum(xib)*0.5
             res = optimize(p -> begin
                                 dK = abs.(Kb .- Kc)
                                 mask = (dK .> exclude_tol_frac*ΔK) .& (xib .> exp(p[3]))
                                 if count(mask) < 3
                                     return 1e12
                                 end
-                                pred = exp(p[3]) .+ exp(p[1]) .* dK.^(-exp(p[2]))
+                                pred = exp(p[3]) .+ exp(p[1]) .* dK.^(exp(p[2]))
                                 return sum((xib[mask] .- pred[mask]).^2)
                             end,
-                            [log(A0), log(ν0), log(ξ00)],
+                            [log(A0), log(ν0), log(β00)],
                             NelderMead(), Optim.Options(iterations=1000))
             A = exp(Optim.minimizer(res)[1])
             ν = exp(Optim.minimizer(res)[2])
-            ξ0 = exp(Optim.minimizer(res)[3])
+            β0 = exp(Optim.minimizer(res)[3])
             sse = Optim.minimum(res)
             if sse < local_best.sse && ν > 0
-                local_best = (sse=sse, Kc=Kc, A=A, ν=ν, ξ0=ξ0)
+                local_best = (sse=sse, Kc=Kc, A=A, ν=ν, β0=β0)
             end
         end
-        boot_params[b,:] .= [local_best.Kc, local_best.ν, local_best.A, local_best.ξ0]
+        boot_params[b,:] .= [local_best.Kc, local_best.ν, local_best.A, local_best.β0]
     end
 
     # Compute bootstrap std devs
     err_Kc = std(boot_params[:,1])
     err_ν  = std(boot_params[:,2])
     err_A  = std(boot_params[:,3])
-    err_ξ0 = std(boot_params[:,4])
+    err_β0 = std(boot_params[:,4])
 
     if plotshow && isfinite(best.Kc)
         # 1) Plot raw ξ(K) vs K (no fit)
-        plt_raw = plot(K_vals, xi, seriestype=:scatter, ms=6,
+        plt_raw = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="Raw ξ(K) data", label="data")
         display(plt_raw)
 
         # 2) Plot fit with divergence
-        plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
+        plt_fit = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="ξ(K) with offset, Kc ≈ $(round(best.Kc,digits=5))",
                        label="data")
         Kgrid = range(Kmin, Kmax, length=400)
-        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
-        plot!(plt_fit, Kgrid, ξfit, lw=2,
-              label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
+        inv_ξfit = best.β0 .+ best.A .* abs.(Kgrid .- best.Kc).^(best.ν)
+        plot!(plt_fit, Kgrid, (1)./inv_ξfit, lw=2,
+              label="fit (ν ≈ $(round(best.ν,digits=3)))")
         vline!(plt_fit, [best.Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
 
-    return (Kc = best.Kc, ν = best.ν, A = best.A, ξ0 = best.ξ0,
-            err_Kc=err_Kc, err_ν=err_ν, err_A=err_A, err_ξ0=err_ξ0,
+    return (Kc = best.Kc, ν = best.ν, A = best.A, β0 = best.β0,
+            err_Kc=err_Kc, err_ν=err_ν, err_A=err_A, err_β0=err_β0,
             sse = best.sse)
 end
 
@@ -162,6 +164,6 @@ println("\n===== Critical fit results with offset and error bars =====")
 println("Kc  ≈ $(res.Kc)  ± $(res.err_Kc)")
 println("ν   ≈ $(res.ν)   ± $(res.err_ν)")
 println("A   ≈ $(res.A)   ± $(res.err_A)")
-println("ξ_0  ≈ $(res.ξ0)  ± $(res.err_ξ0)")
+println("ξ_0  ≈ $(res.β0)  ± $(res.err_β0)")
 println("Fit quality: ", s_rel)
 #ylims!(minimum(xi)*0.8, 4.0)
