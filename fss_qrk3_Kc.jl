@@ -57,8 +57,8 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
         ν0 = 1.5
         ξ00 = minimum(xi) * 0.5
 
-        res = optimize(p -> sse_offset(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
-                       [log(A0), log(ν0), log(ξ00)],
+        res = optimize(p -> sse_offset(Kc, p[1], p[2], p[3]),
+                       [A0, ν0, ξ00],
                             NelderMead(), Optim.Options(iterations=2000))
         A = exp(Optim.minimizer(res)[1])
         ν = exp(Optim.minimizer(res)[2])
@@ -86,10 +86,10 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
                                 if count(mask) < 3
                                     return 1e12
                                 end
-                                pred = exp(p[3]) .+ exp(p[1]) .* dK.^(-exp(p[2]))
+                                pred = p[3] .+ p[1] .* dK.^(-p[2])
                                 return sum((xib[mask] .- pred[mask]).^2)
                             end,
-                            [log(A0), log(ν0), log(ξ00)],
+                            [A0, ν0, ξ00],
                             NelderMead(), Optim.Options(iterations=1000))
             A = exp(Optim.minimizer(res)[1])
             ν = exp(Optim.minimizer(res)[2])
@@ -109,11 +109,12 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
     err_ξ0 = std(boot_params[:,4])
 
     if plotshow && isfinite(best.Kc)
+        #=
         # 1) Plot raw ξ(K) vs K (no fit)
         plt_raw = plot(K_vals, xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="Raw ξ(K) data", label="data")
-        display(plt_raw)
+        display(plt_raw)=#
 
         # 2) Plot fit with divergence
         plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
