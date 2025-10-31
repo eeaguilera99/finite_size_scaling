@@ -56,7 +56,7 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
     for Kc in Kc_grid
         # crude initial guesses
         A0 = maximum(xi)
-        ν0 = 1.5
+        ν0 = 1.2
         β00 = minimum(xi) * 0.5
 
         res = optimize(p -> sse_offset(Kc, exp(p[1]), exp(p[2]), exp(p[3])),
