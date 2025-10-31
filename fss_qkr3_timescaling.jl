@@ -4,6 +4,7 @@ using Optim
 using Plots
 using LsqFit
 using CSV, DataFrames
+using LaTeXStrings
 
 K_vals = vec(Matrix(CSV.read("data2/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals = vec(Matrix(CSV.read("data2/number_of_kicks.csv", DataFrame; header=false)))  # Times
