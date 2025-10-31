@@ -5,6 +5,29 @@ dim=3  # spatial dimension
 res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
 xi=exp.(shifts)
 
+#collect data close to Kc
+close_to_Kc = []
+for (i, K) in enumerate(K_vals)
+        if abs(K-Kc)<0.5
+            push!(close_to_Kc, (K=K, xi=xi[i]))
+        end
+end
+
+#compute finite differences respect t for Ln(Λ)
+function compute_finite_differences(vals_close_to_Kc)
+
+end
+
+
+
+
+
+
+
+
+
+
+#=
 #filter Nkicks range
 n_kicks_i=5
 n_kicks_f=0
@@ -12,17 +35,23 @@ n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
 t_vals = t_vals[n_kicks_i:n_Nkicks_f]
 p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
 
+
 app_Kc_index = argmax(xi)
-E_vals = p2_mat[app_Kc_index, :]
+app_Kc = K_vals[app_Kc_index]
+K_c = 1.162 #determined from dim scan
+#E_vals = p2_mat[app_Kc_index, :]#get data close to Kc
 
-model(t,p) = p[1] .+ p[2].*t.^(2/(3*p[3]))  # model: ln(Λ) = ln(ξ0) + A * t^(1/(3*ν))
+model(t,p) = log(p[1]) .+ p[2].*(app_Kc-K_c)t.^(1/(3*p[3]))  # model: ln(Λ) = ln(ξ0) + A * t^(1/(3*ν))
 
-fit = curve_fit(model, t_vals, E_vals, [0, 1.0, 1.5])
+fit = curve_fit(model, t_vals, Y, [0, 1.0, 1.5])
 ν_fit = fit.param[3]
 
-plot(t_vals, E_vals, seriestype=:scatter, xscale=:log10, yscale=:log10, label="ν=$(ν_fit)", xlabel="t", ylabel="⟨p²⟩ at Kc",
+plot(t_vals, Y, seriestype=:scatter, xscale=:log10, yscale=:log10, label="ν=$(ν_fit)", xlabel="t", ylabel="⟨p²⟩ at Kc",
         title="Fit of Λ vs t at Kc")
 plot!(t_vals, model(t_vals, fit.param), lw=2, label="fit")
 
 #display(plt_fit)
 #fit_nu_vs_t(t_vals, Y, xi)
+
+
+=#

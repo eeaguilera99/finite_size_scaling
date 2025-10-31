@@ -2,7 +2,7 @@ include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 #code to loop over dimension values for best collapse
 
-d_values = 2:0.05:3
+d_values = 1.7:0.05:10
 
 collapse_quality_1 = Float64[]
 #shift_dict = Dict{Float64, Vector{Float64}}()
