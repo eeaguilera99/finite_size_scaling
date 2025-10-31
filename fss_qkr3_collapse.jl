@@ -29,7 +29,7 @@ for (i,K) in enumerate(K_vals)
     plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K="*string(round(K, digits=3)))
 end
 display(plt1)
-savefig(plt1, "fss_raw_data_d$(dim).png")
+#savefig(plt1, "fss_raw_data_d$(dim).png")
 
 # Plot after collapse
 plt2 = plot(title="Data collapse (after optimal shifts) d=$(dim)",
@@ -38,6 +38,6 @@ for (i,K) in enumerate(K_vals)
     plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end
 display(plt2)
-savefig(plt2, "fss_collapsed_data_d$(dim).png")
+#savefig(plt2, "fss_collapsed_data_d$(dim).png")
 
 println("Fit quality: ", s_rel)
