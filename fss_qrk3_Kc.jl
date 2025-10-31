@@ -123,7 +123,7 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
         Kgrid = range(Kmin, Kmax, length=400)
         ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
         plot!(plt_fit, Kgrid, ξfit, lw=2,
-              label="fit (ν ≈ $(round(best.ν,digits=3)))")
+              label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
         vline!(plt_fit, [best.Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
@@ -144,7 +144,7 @@ plt1 = plot(title="Raw data (before shifts)",
 for (i,K) in enumerate(K_vals)
     plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K=$K")
 end
-display(plt1)=#
+display(plt1)
 
 # Plot after collapse
 plt2 = plot(title="Data collapse (after optimal shifts)",
@@ -152,7 +152,7 @@ plt2 = plot(title="Data collapse (after optimal shifts)",
 for (i,K) in enumerate(K_vals)
     plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end
-display(plt2)
+display(plt2)=#
 
 # ===== Example usage (after you have shifts) =====
 xi = exp.(shifts)
@@ -164,4 +164,4 @@ println("ν   ≈ $(res.ν)   ± $(res.err_ν)")
 println("A   ≈ $(res.A)   ± $(res.err_A)")
 println("ξ_0  ≈ $(res.ξ0)  ± $(res.err_ξ0)")
 println("Fit quality: ", s_rel)
-
+#ylims!(minimum(xi)*0.8, 4.0)
