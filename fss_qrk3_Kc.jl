@@ -117,14 +117,15 @@ function fit_xi_offset_vsK(K_vals, xi; ngrid=400, exclude_tol_frac=0.02,
         display(plt_raw)=#
 
         # 2) Plot fit with divergence
-        plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
+        Kgrid = range(Kmin, Kmax, length=400)
+        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
+        plt_fit = plot(Kgrid, ξfit, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
                        title="ξ(K) with offset, Kc ≈ $(round(best.Kc,digits=5))",
                        label="data")
-        Kgrid = range(Kmin, Kmax, length=400)
-        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
-        plot!(plt_fit, Kgrid, ξfit, lw=2,
-              label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
+        println(ξfit)
+        #plot!(plt_fit, Kgrid, , lw=2,
+        #      label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
         vline!(plt_fit, [best.Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
