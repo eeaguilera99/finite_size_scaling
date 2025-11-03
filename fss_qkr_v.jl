@@ -105,8 +105,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
         display(plt2)
         
         # Fig. 14: ln|s| vs ln t
-        plt3 = plot(logt, logs, seriestype=:scatter, ms=6,
-                    xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
+        plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
                     title="Scaling of slopes", label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
