@@ -31,7 +31,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     X = -log.(t_vals' .^ (1/d))     # 1×N
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
-    Yerr = Λ_err ./ Λ
+    Yerr = log.(Λ_err)
 
     # Flatten for binning
     allY = vec(Y)
