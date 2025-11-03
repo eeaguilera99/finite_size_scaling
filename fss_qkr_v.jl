@@ -30,7 +30,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
     Λ = p2_mat ./ (t_vals' .^ (2/dim))
     Λ_err = p2_err_mat ./ (t_vals' .^ (2/dim))
     lnΛ = log.(Λ)
-    ln_Λ_err = Λ_err ./ Λ   # propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
+    ln_Λ_err = log.(Λ_err) 
 
     # 2️⃣ Fit lnΛ ≈ lnΛc + s(t)*(K−Kc) near Kc
     #create similar dimension arrays
