@@ -47,9 +47,13 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         ξfit_model = (1)./model(Kgrid, pbest)
         plt_fit = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)",
-                       title="ξ(K) with offset fit (LsqFit.jl)", label="data")
-        plot!(plt_fit, Kgrid, ξfit_model, lw=2, label="fit (ν ≈ $(round(ν,digits=3)))")
-        vline!(plt_fit, [Kc], linestyle=:dash, color=:red, label="Kc")
+                       title="ξ(K) with offset, Kc ≈ $(round(best.Kc,digits=5))",
+                       label="data")
+        Kgrid = range(Kmin, Kmax, length=400)
+        ξfit = best.ξ0 .+ best.A .* abs.(Kgrid .- best.Kc).^(-best.ν)
+        plot!(plt_fit, Kgrid, ξfit, lw=2,
+              label="fit (ν ≈ $(round(best.ν,digits=3)))", ylims=(minimum(xi)*0.8, 4))
+        vline!(plt_fit, [best.Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
 
