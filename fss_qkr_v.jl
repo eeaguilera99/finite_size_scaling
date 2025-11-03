@@ -13,14 +13,14 @@ Implements the Lemarié finite-time-scaling method:
 
 Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 """
-function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
+function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
 
     
     #filter Nkicks range
     n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
     t_vals = t_vals[n_kicks_i:n_Nkicks_f]
     p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
-    #p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
+    p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
 
     K_vals = collect(K_vals)
     t_vals = collect(t_vals)
@@ -28,7 +28,9 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
 
     # 1️⃣ Build Λ(K,t)
     Λ = p2_mat ./ (t_vals' .^ (2/dim))
+    Λ_err = p2_err_mat ./ (t_vals' .^ (2/dim))
     lnΛ = log.(Λ)
+    ln_Λ_err = Λ_err ./ Λ   # propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
 
     # 2️⃣ Fit lnΛ ≈ lnΛc + s(t)*(K−Kc) near Kc
     #create similar dimension arrays
@@ -98,7 +100,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
             a, b = fit_lines[j]
             Kloc = Kfit
             yloc = a .+ b .* (Kloc .- Kc)
-            scatter!(plt2, Kloc, lnΛ[:,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
+            scatter!(plt2, Kloc, lnΛ[:,j], yerror=ln_Λ_err[:,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
             plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc=$(round(Kc,digits=3))")
@@ -120,8 +122,8 @@ end
 Kc = 1.165
 dim=3
 
-res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.25, n_kicks_i=5)
+res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
+                                 Kc = Kc, ΔKfit = 1, n_kicks_i=5)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
