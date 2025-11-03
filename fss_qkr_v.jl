@@ -63,11 +63,20 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
     # 3️⃣ log–log fit of |s(t)| vs t
     logt = log.(t_vals)
     logs = log.(abs.(s_vals))
+    logs_err = s_errs ./ abs.(s_vals)   # σ(ln s) = σ_s / |s|
     A = hcat(ones(length(logt)), logt)
-    coeff = A \ logs
+
+# Weighted linear regression using weights = 1/σ²
+    W = Diagonal(1.0 ./ (logs_err.^2))
+    covmat = inv(A' * W * A)
+    coeff = covmat * (A' * W * logs)
     logs_fit = A * coeff
     slope = coeff[2]
+    slope_err = sqrt(covmat[2,2])
     ν = 1 / (3*slope)
+    ν_err = abs(ν^2) * slope_err / 3  # propagate: dν = -(ν²/3)*dslope
+
+    
     intercept = coeff[1]
 
     # 4️⃣ Plots
@@ -94,18 +103,19 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt2)
-        #=
+        
         # Fig. 14: ln|s| vs ln t
-        plt2 = plot(logt, logs, seriestype=:scatter, ms=6,
+        plt3 = plot(logt, logs, seriestype=:scatter, ms=6,
                     xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
                     title="Scaling of slopes", label="data")
-        plot!(plt2, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))")
-        display(plt2)=#
+        scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
+        plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
+        display(plt3)
     end
 
-    return (ν=ν, slope=slope, intercept=intercept,
+    return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
             s_vals=s_vals, s_errs=s_errs,
-            lnΛc_vals=lnΛc_vals)
+            lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
 Kc = 1.165
@@ -115,4 +125,5 @@ res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim;
                                  Kc = Kc, ΔKfit = 0.25, n_kicks_i=5)
 
 println("\n===== Linear finite-time-scaling results =====")
-println("ν = $(round(res.ν,digits=3))  (from slope = $(round(res.slope,digits=4)))")
+println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
+println("slope (1/3ν) = $(round(res.slope,digits=5)) ± $(round(res.slope_err,digits=5))")
