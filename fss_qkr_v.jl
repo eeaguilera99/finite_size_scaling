@@ -70,8 +70,8 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3,
     # 4️⃣ Plots
     if plotshow
         # Fig. 13: lnΛ vs K for several t
-        plt1 = plot(title="ln Λ(K) for various t ",
-                    xlabel="K", ylabel="ln Λ", legend=:topleft)
+        plt1 = plot(title=L"\ln{Λ(K)}"*" for various "*L"t",
+                    xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
         for j in 1:N
             plot!(plt1, K_vals, lnΛ[:,j], label="t=$(round(t_vals[j],digits=3))", lw=1.8)
         end
@@ -80,11 +80,9 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3,
 
         # Fig. 14: ln|s| vs ln t
         plt2 = plot(logt, logs, seriestype=:scatter, ms=6,
-                    xlabel="ln t", ylabel="ln |s(t)|",
-                    title="Scaling of slopes (Fig. 14-like)", label="data")
-        plot!(plt2, logt, logs_fit, lw=2, label="fit")
-        annotate!(minimum(logt), maximum(logs),
-                  text("ν ≈ $(round(ν,digits=3))", :left, 10))
+                    xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
+                    title="Scaling of slopes", label="data")
+        plot!(plt2, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))")
         display(plt2)
     end
 
