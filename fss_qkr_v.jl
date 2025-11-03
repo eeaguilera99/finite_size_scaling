@@ -92,7 +92,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title="Linear fits near Kc=$(round(Kc,digits=3))",
+        plt2 = plot(title="Linear fits near ΔKfit=$(ΔKfit)",
                     xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -101,7 +101,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1,
             scatter!(plt2, Kloc, lnΛ[:,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
             plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
-        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc")
+        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc=$(round(Kc,digits=3))")
         display(plt2)
         
         # Fig. 14: ln|s| vs ln t
