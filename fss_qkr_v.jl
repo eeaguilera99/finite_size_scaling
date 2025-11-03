@@ -13,7 +13,7 @@ Implements the Lemarié finite-time-scaling method:
 
 Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 """
-function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3, plotshow=true, n_kicks_i=1, n_kicks_f=0)
+function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
 
     
     #filter Nkicks range
@@ -35,6 +35,8 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3,
     s_vals = similar(t_vals)
     s_errs = similar(t_vals)
     lnΛc_vals = similar(t_vals)
+    fit_lines = Vector{Tuple{Float64,Float64}}(undef, length(t_vals))  # (intercept,slope)    
+
 
     mask_global = abs.(K_vals .- Kc) .<= ΔKfit
     Kfit = K_vals[mask_global]
@@ -55,6 +57,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3,
         lnΛc_vals[j] = coeffs[1]
         s_vals[j] = coeffs[2]
         s_errs[j] = sqrt(cov[2,2])
+        fit_lines[j] = (coeffs[1], coeffs[2])
     end
 
     # 3️⃣ log–log fit of |s(t)| vs t
@@ -69,21 +72,35 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, dim; Kc, ΔKfit=0.3,
 
     # 4️⃣ Plots
     if plotshow
+        #=
         # Fig. 13: lnΛ vs K for several t
         plt1 = plot(title=L"\ln{Λ(K)}"*" for various "*L"t",
                     xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
         for j in 1:N
             plot!(plt1, K_vals, lnΛ[:,j], label="t=$(round(t_vals[j],digits=3))", lw=1.8)
         end
+        
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
-        display(plt1)
+        display(plt1)=#
 
+        plt2 = plot(title="Linear fits near Kc=$(round(Kc,digits=3))",
+                    xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
+        for j in 1:N
+            a, b = fit_lines[j]
+            Kloc = Kfit
+            yloc = a .+ b .* (Kloc .- Kc)
+            scatter!(plt2, Kloc, lnΛ[:,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
+            plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
+        end
+        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc")
+        display(plt2)
+        #=
         # Fig. 14: ln|s| vs ln t
         plt2 = plot(logt, logs, seriestype=:scatter, ms=6,
                     xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
                     title="Scaling of slopes", label="data")
         plot!(plt2, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))")
-        display(plt2)
+        display(plt2)=#
     end
 
     return (ν=ν, slope=slope, intercept=intercept,
