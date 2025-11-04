@@ -11,7 +11,7 @@ Returns best-fit parameters + standard errors from covariance matrix.
 function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     xi=(1)./xi
     # Model function
-    model(K, p) = exp(p[1]) .+ p[2] .* abs.(K .- p[4]).^(exp(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{−ν}
+    model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{−ν}
     names = ["β₀", "A", "ν", "Kc"]
 
     # Initial guess
@@ -33,8 +33,8 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     perr  = sqrt.(diag(covar))
 
     # Unpack results
-    log_β0, A, log_ν, Kc = pbest
-    err_log_β0, err_A, err_log_ν, err_Kc = perr
+    β0, A, ν, Kc = pbest
+    err_β0, err_A, err_ν, err_Kc = perr
 
     if plotshow
         # Plot raw data
@@ -51,20 +51,20 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         ξfit = (1)./model(Kgrid, pbest)
         plot!(plt_fit, Kgrid, ξfit, lw=2,
-              label="fit (ν ≈ $(round(exp(log_ν),digits=3)))")
+              label="fit (ν ≈ $(round(ν,digits=3)))")
         vline!(plt_fit, [Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
     end
 
-    return (β0=exp(log_β0), A=A, ν=exp(log_ν), Kc=Kc,
-            err_β0=exp(err_log_β0), err_A=err_A, err_ν=exp(err_log_ν), err_Kc=err_Kc)
+    return (β0=β0, A=A, ν=ν, Kc=Kc,
+            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc)
 end
 
 
-dim = 3  # spatial dimension
+dim = 3 # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
 # ===== Example usage =====
 xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)
