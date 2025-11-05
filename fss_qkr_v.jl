@@ -51,7 +51,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         y = lnΛ[mask_global, j]
         # linear regression y = a + b*X
         A = hcat(ones(length(X)), X)
-        coeffs = A \ y
+        coeffs = A \ y #solve least squares
         yfit = A * coeffs
         resid = y - yfit
         σ2 = sum(resid.^2) / (length(y)-2)
@@ -62,7 +62,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         fit_lines[j] = (coeffs[1], coeffs[2])
     end
 
-    # 3️⃣ log–log fit of |s(t)| vs t
+    # 3️⃣ log–log fit of |s(t)| vs ln t
     logt = log.(t_vals)
     logs = log.(abs.(s_vals))
     logs_err = s_errs ./ abs.(s_vals)   # σ(ln s) = σ_s / |s|
@@ -75,8 +75,8 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
     logs_fit = A * coeff
     slope = coeff[2]
     slope_err = sqrt(covmat[2,2])
-    ν = 1 / (3*slope)
-    ν_err = abs(ν^2) * slope_err / 3  # propagate: dν = -(ν²/3)*dslope
+    ν = 1 / (dim*slope)
+    ν_err = abs(ν^2) * slope_err / dim  # propagate: dν = -(ν²/3)*dslope
 
     
     intercept = coeff[1]
@@ -105,13 +105,15 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc=$(round(Kc,digits=3))")
         display(plt2)
-        
+        savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
+         
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
                     title="Scaling of slopes", label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
+        savefig(plt3, "fss_slope_scaling_d$(dim)_Kc$(round(Kc,digits=3)).png")
     end
 
     return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
@@ -119,12 +121,12 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
-Kc = 1.1002
+Kc = 1.162
 dim=3
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=5, n_kicks_f=6,)
+                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=5, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
-println("slope (1/3ν) = $(round(res.slope,digits=5)) ± $(round(res.slope_err,digits=5))")
+#println("slope (1/3ν) = $(round(res.slope,digits=5)) ± $(round(res.slope_err,digits=5))")
