@@ -46,7 +46,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         error("Not enough K points near Kc. Increase ΔKfit.")
     end
     X = Kfit .- Kc
-
+    Kfit_interval = indexin(Kfit, K_vals)
     for (j,t) in enumerate(t_vals)
         y = lnΛ[mask_global, j]
         # linear regression y = a + b*X
@@ -71,7 +71,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
 # Weighted linear regression using weights = 1/σ²
     W = Diagonal(1.0 ./ (logs_err.^2))
     covmat = inv(A' * W * A)
-    coeff = covmat * (A' * W * logs)
+    coeff = covmat * (A' * W * logs) # weighted least squares solution
     logs_fit = A * coeff
     slope = coeff[2]
     slope_err = sqrt(covmat[2,2])
@@ -100,12 +100,12 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             a, b = fit_lines[j]
             Kloc = Kfit
             yloc = a .+ b .* (Kloc .- Kc)
-            scatter!(plt2, Kloc, lnΛ[:,j], yerror=ln_Λ_err[:,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
-            plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
+            scatter!(plt2, Kloc, lnΛ[Kfit_interval,j], yerror=ln_Λ_err[Kfit_interval,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
+            #plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc=$(round(Kc,digits=3))")
         display(plt2)
-        savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        #savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
@@ -113,7 +113,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
-        savefig(plt3, "fss_slope_scaling_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        #savefig(plt3, "fss_slope_scaling_d$(dim)_Kc$(round(Kc,digits=3)).png")
     end
 
     return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
@@ -125,7 +125,7 @@ Kc = 1.162
 dim=3
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=5, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 0.1, n_kicks_i=5, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
