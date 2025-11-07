@@ -51,12 +51,13 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         ξfit = (1)./model(Kgrid, pbest)
         plot!(plt_fit, Kgrid, ξfit, lw=2,
-              label="fit (ν ≈ $(round(ν,digits=3)))")
+              label="fit (ν ≈ $(round(abs(ν),digits=3)))")
         vline!(plt_fit, [Kc], linestyle=:dash, color=:red, label="Kc")
         display(plt_fit)
+        #savefig(plt_fit, "fss_xi_fit_offset_Kc$(round(Kc,digits=3)).png")
     end
 
-    return (β0=β0, A=A, ν=ν, Kc=Kc,
+    return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
             err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc)
 end
 
@@ -64,7 +65,7 @@ end
 dim = 3 # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5)
+res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 # ===== Example usage =====
 xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)
