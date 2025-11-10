@@ -94,8 +94,8 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title="Linear fits near ΔKfit=$(ΔKfit)",
-                    xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
+        plt2 = plot(title="Linear fits near Δfit=$(ΔKfit)",
+                    xlabel=L"κ", ylabel=L"\ln{Λ(κ)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
             Kloc = Kfit
@@ -103,17 +103,17 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             scatter!(plt2, Kloc, lnΛ[Kfit_interval,j], yerror=ln_Λ_err[Kfit_interval,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
             #plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
-        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="Kc=$(round(Kc,digits=3))")
+        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="κc=$(round(Kc,digits=3))")
         display(plt2)
         savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
         # Fig. 14: ln|s| vs ln t
-        plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(K_c)",
+        plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
                     title="Scaling of slopes", label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
-        savefig(plt3, "fss_slope_scaling_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
 
     return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,

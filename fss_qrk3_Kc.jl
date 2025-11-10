@@ -1,7 +1,5 @@
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
-using LsqFit
-using Plots
 
 """
 Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
@@ -45,16 +43,16 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         plt_fit = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
-                       xlabel="K", ylabel="ξ(K)",
-                       title="ξ(K) with offset, Kc ≈ $(round(Kc,digits=5))",
+                       xlabel="κ", ylabel="ξ(κ)",
+                       title="ξ(κ) with offset, "*L"\kappa_c"*"≈ $(round(Kc,digits=5))",
                        label="data")
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         ξfit = (1)./model(Kgrid, pbest)
         plot!(plt_fit, Kgrid, ξfit, lw=2,
               label="fit (ν ≈ $(round(abs(ν),digits=3)))")
-        vline!(plt_fit, [Kc], linestyle=:dash, color=:red, label="Kc")
+        vline!(plt_fit, [Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
         display(plt_fit)
-        #savefig(plt_fit, "fss_xi_fit_offset_Kc$(round(Kc,digits=3)).png")
+        #savefig(plt_fit, "fss_xi_fit_offset_κc$(round(Kc,digits=3)).png")
     end
 
     return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
@@ -72,7 +70,7 @@ results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)
 #println(results)
 
 println("\n===== Critical fit results with offset and error bars =====")
-println("Kc  ≈ $(results.Kc)  ± $(results.err_Kc)")
+println("κc  ≈ $(results.Kc)  ± $(results.err_Kc)")
 println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
 println("A   ≈ $(results.A)   ± $(results.err_A)")
 println("β_0  ≈ $(results.β0)  ± $(results.err_β0)")

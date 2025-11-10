@@ -33,7 +33,7 @@ display(plt1)
 
 # Plot after collapse
 plt2 = plot(title="Data collapse (after optimal shifts) d=$(dim)",
-    xlabel="ln(ξ/t^(1/d))", ylabel="ln(Λ)")
+    xlabel="ln(ξ/N^(1/d))", ylabel="ln(Λ)")
 for (i,K) in enumerate(K_vals)
     plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end
