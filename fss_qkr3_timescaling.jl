@@ -15,7 +15,7 @@ p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=f
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
 function revert_scale(time_vals, p2_vals, d1, d2)
-    t_vals =exp.(time_vals .* (1/d1))
+    t_vals = exp.(time_vals .* -d1)
     p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
     return t_vals, p2_mat'
 end
