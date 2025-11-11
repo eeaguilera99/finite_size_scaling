@@ -6,11 +6,21 @@ using LsqFit
 using CSV, DataFrames
 using LaTeXStrings
 
-K_vals = vec(Matrix(CSV.read("data2/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data2/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data2/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
+t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))             # ⟨p²⟩ values
+#p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
+"Theory values of time are scaled, we revert them for dimension d1
+For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
+function revert_scale(time_vals, p2_vals, d1, d2)
+    t_vals =exp.(time_vals .* (1/d1))
+    p2_mat = p2_vals .* (t_vals' .^ (2/d2))
+    return t_vals, p2_mat'
+end
+dim1 = 5
+dim2 = 3
+t_vals, p2_mat = revert_scale(t_vals_0, p2_mat_0, dim1, dim2)
 
 
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
