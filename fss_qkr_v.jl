@@ -94,16 +94,16 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title="Linear fits near Δfit=$(ΔKfit)",
-                    xlabel=L"κ", ylabel=L"\ln{Λ(κ)}", legend=:topleft)
+        plt2 = plot(title="Linear fits near Δκfit=$(ΔKfit)",
+                    xlabel=L"κ", ylabel=L"\ln{Λ(κ_c)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
             Kloc = Kfit
             yloc = a .+ b .* (Kloc .- Kc)
             scatter!(plt2, Kloc, lnΛ[Kfit_interval,j], yerror=ln_Λ_err[Kfit_interval,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
-            #plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
+            plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
-        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="κc=$(round(Kc,digits=3))")
+        vline!(plt2, [Kc], color=:red, linestyle=:dash, label=L"\kappa_c="*"$(round(Kc,digits=3))")
         display(plt2)
         savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
