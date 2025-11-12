@@ -25,6 +25,45 @@ t_vals, p2_mat = revert_scale(t_vals_0, p2_mat_0, dim1, dim2)
 
 p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
 
+function adaptive_moving_average(y; min_win=3, max_win=15, ε=1e-12)
+    N = length(y)
+    smooth = similar(y)
+
+    # robust scale: avoid global outlier domination
+    global_scale = max(maximum(abs.(y)), ε)
+
+    for i in 1:N
+        # small probe window to estimate local amplitude (safe clamp)
+        probe = max(1, i-2) : min(N, i+2)
+        local_amp = maximum(y[probe]) - minimum(y[probe])
+
+        # map local amplitude to window size (inverted: larger amp -> smaller window)
+        frac = clamp(local_amp / global_scale, 0.0, 1.0)
+        scaled_win = round(Int, max_win - frac * (max_win - min_win))
+
+        # enforce bounds and oddness
+        scaled_win = clamp(scaled_win, min_win, max_win)
+        actual_win = isodd(scaled_win) ? scaled_win : scaled_win + 1
+        actual_win = min(actual_win, max_win)              # ensure not exceed max
+
+        hw = actual_win ÷ 2
+        win_start = max(1, i - hw)
+        win_stop  = min(N, i + hw)
+        win = win_start:win_stop
+
+        smooth[i] = mean(view(y, win))
+    end
+
+    return smooth
+end
+
+function apply_mov_av_matrix(M)
+    for i in 1:size(M,1)
+        M[i,:] = adaptive_moving_average(M[i,:]; min_win=3, max_win=15)
+    end
+    return M
+end
+
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
     
     #filter Nkicks range
