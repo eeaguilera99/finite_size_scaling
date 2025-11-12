@@ -15,14 +15,15 @@ nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_350.csv", DataFrame; header=f
 
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
-function revert_scale(time_vals, p2_vals, d1, d2)
+function revert_scale(time_vals, p2_vals, nc2_vals, d1, d2)
     t_vals = exp.(time_vals .* -d1)
     p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
-    return t_vals, p2_mat'
+    nc_mat = exp.(nc2_vals) .* (t_vals .^ (2/d2))
+    return t_vals, p2_mat', nc_mat'
 end
 dim1 = 5
 dim2 = 3
-t_vals, p2_mat = revert_scale(t_vals_0, p2_mat_0, dim1, dim2)
+t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
 
 p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
 
