@@ -8,7 +8,8 @@ using LaTeXStrings
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))             # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_350.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_350.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
 
