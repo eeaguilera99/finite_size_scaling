@@ -8,8 +8,8 @@ using LaTeXStrings
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_350.csv", DataFrame; header=false))
-nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_350.csv", DataFrame; header=false))              # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_1038.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_1038.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
 
@@ -26,42 +26,47 @@ dim2 = 3
 t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
 
 p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
+nc_err_mat = 0.01 .* nc_mat 
 
-function adaptive_moving_average(y; min_win=3, max_win=15, ε=1e-12)
-    N = length(y)
-    smooth = similar(y)
+function adaptive_moving_average(y; p=true, min_win=3, max_win=15, ε=1e-12)
+    if p ==true
+        N = length(y)
+        smooth = similar(y)
 
-    # robust scale: avoid global outlier domination
-    global_scale = max(maximum(abs.(y)), ε)
+        # robust scale: avoid global outlier domination
+        global_scale = max(maximum(abs.(y)), ε)
 
-    for i in 1:N
-        # small probe window to estimate local amplitude (safe clamp)
-        probe = max(1, i-2) : min(N, i+2)
-        local_amp = maximum(y[probe]) - minimum(y[probe])
+        for i in 1:N
+            # small probe window to estimate local amplitude (safe clamp)
+            probe = max(1, i-2) : min(N, i+2)
+            local_amp = maximum(y[probe]) - minimum(y[probe])
 
-        # map local amplitude to window size (inverted: larger amp -> smaller window)
-        frac = clamp(local_amp / global_scale, 0.0, 1.0)
-        scaled_win = round(Int, max_win - frac * (max_win - min_win))
+            # map local amplitude to window size (inverted: larger amp -> smaller window)
+            frac = clamp(local_amp / global_scale, 0.0, 1.0)
+            scaled_win = round(Int, max_win - frac * (max_win - min_win))
 
-        # enforce bounds and oddness
-        scaled_win = clamp(scaled_win, min_win, max_win)
-        actual_win = isodd(scaled_win) ? scaled_win : scaled_win + 1
-        actual_win = min(actual_win, max_win)              # ensure not exceed max
+            # enforce bounds and oddness
+            scaled_win = clamp(scaled_win, min_win, max_win)
+            actual_win = isodd(scaled_win) ? scaled_win : scaled_win + 1
+            actual_win = min(actual_win, max_win)              # ensure not exceed max
 
-        hw = actual_win ÷ 2
-        win_start = max(1, i - hw)
-        win_stop  = min(N, i + hw)
-        win = win_start:win_stop
+            hw = actual_win ÷ 2
+            win_start = max(1, i - hw)
+            win_stop  = min(N, i + hw)
+            win = win_start:win_stop
 
-        smooth[i] = mean(view(y, win))
+            smooth[i] = mean(view(y, win))
+        end
+
+        return smooth
+    else
+        return y
     end
-
-    return smooth
 end
 
-function apply_mov_av_matrix(M)
+function apply_mov_av_matrix(M; p=true)
     for i in 1:size(M,1)
-        M[i,:] = adaptive_moving_average(M[i,:]; min_win=3, max_win=15)
+        M[i,:] = adaptive_moving_average(M[i,:]; p=p, min_win=3, max_win=15)
     end
     return M
 end
