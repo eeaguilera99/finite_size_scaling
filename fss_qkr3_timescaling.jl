@@ -28,7 +28,7 @@ t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
 p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
 nc_err_mat = 0.01 .* nc_mat 
 
-function adaptive_moving_average(y; p=true, min_win=3, max_win=15, ε=1e-12)
+function adaptive_moving_average(y; p=true, loc_amp=2, min_win=3, max_win=15, ε=1e-12)
     if p ==true
         N = length(y)
         smooth = similar(y)
@@ -38,7 +38,7 @@ function adaptive_moving_average(y; p=true, min_win=3, max_win=15, ε=1e-12)
 
         for i in 1:N
             # small probe window to estimate local amplitude (safe clamp)
-            probe = max(1, i-2) : min(N, i+2)
+            probe = max(1, i-loc_amp) : min(N, i+loc_amp)
             local_amp = maximum(y[probe]) - minimum(y[probe])
 
             # map local amplitude to window size (inverted: larger amp -> smaller window)
@@ -64,9 +64,9 @@ function adaptive_moving_average(y; p=true, min_win=3, max_win=15, ε=1e-12)
     end
 end
 
-function apply_mov_av_matrix(M; p=true)
+function apply_mov_av_matrix(M; p=true, loc_amp=2)
     for i in 1:size(M,1)
-        M[i,:] = adaptive_moving_average(M[i,:]; p=p, min_win=3, max_win=15)
+        M[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
     end
     return M
 end
