@@ -15,7 +15,7 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     # Initial guess
     β₀₀ = maximum(xi)*0.5
     A₀  = minimum(xi)
-    ν₀  = 1
+    ν₀  = 1.5
     Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
@@ -43,8 +43,8 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         plt_fit = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
-                       xlabel="κ", ylabel="ξ(κ)",
-                       title="ξ(κ) with offset, "*L"\kappa_c"*"≈ $(round(Kc,digits=5))",
+                       xlabel=L"κ", ylabel=L"ξ(κ)",
+                       title=latexstring("\$ξ(κ)\$ with offset, \$κ_c\$≈$(round(Kc,digits=5))"),
                        label="data")
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         ξfit = (1)./model(Kgrid, pbest)
@@ -63,7 +63,7 @@ end
 dim = 3 # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
 # ===== Example usage =====
 xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi; plotshow=true)

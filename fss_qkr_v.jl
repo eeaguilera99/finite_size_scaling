@@ -94,7 +94,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title="Linear fits near Δκfit=$(ΔKfit)",
+        plt2 = plot(title=latexstring("Linear fits near \$Δκ_{fit}\$=$(ΔKfit)"),
                     xlabel=L"κ", ylabel=L"\ln{Λ(κ_c)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -105,7 +105,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label=L"\kappa_c="*"$(round(Kc,digits=3))")
         display(plt2)
-        savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        #savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
@@ -113,7 +113,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
-        savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
+        #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
 
     return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
@@ -121,11 +121,11 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
-Kc = 1.162
+Kc = 1.277
 dim=3
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 1, n_kicks_i=5, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 0.1, n_kicks_i=2, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
