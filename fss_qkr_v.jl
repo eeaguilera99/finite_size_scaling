@@ -101,11 +101,11 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             Kloc = Kfit
             yloc = a .+ b .* (Kloc .- Kc)
             scatter!(plt2, Kloc, lnΛ[Kfit_interval,j], yerror=ln_Λ_err[Kfit_interval,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
-            #plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
+            plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label="κc=$(round(Kc,digits=3))")
         display(plt2)
-        savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        #savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
@@ -113,7 +113,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
-        savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
+        #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
 
     return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
@@ -121,11 +121,11 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
-Kc = 1.162
+Kc = 1.276
 dim=3
 
-res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 1, n_kicks_i=5, n_kicks_f=0)
+res = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=5), nc_err_mat, dim;
+                                 Kc = Kc, ΔKfit = 1, n_kicks_i=1, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
