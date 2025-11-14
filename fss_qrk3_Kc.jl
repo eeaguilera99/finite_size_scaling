@@ -13,10 +13,10 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     names = ["β₀", "A", "ν", "Kc"]
 
     # Initial guess
-    β₀₀ = minimum(xi)*0.5
-    A₀  = maximum(xi)
-    ν₀  = 1.5
-    Kc₀ = K_vals[argmax(xi)]  # where ξ is largest
+    β₀₀ = maximum(xi)*0.5
+    A₀  = minimum(xi)
+    ν₀  = 1
+    Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
