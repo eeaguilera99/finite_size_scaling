@@ -15,8 +15,8 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05, plotshow=true)
     # Initial guess
     β₀₀ = minimum(xi)*0.5
     A₀  = maximum(xi)
-    ν₀  = 1.5
-    Kc₀ = K_vals[argmax(xi)]  # where ξ is largest
+    ν₀  = 0.5
+    Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
@@ -41,13 +41,13 @@ end
 
 
 dim = 3 # spatial dimension
-a_s = 220 
+a_s = 1038 
 
 # Perform collapse
 res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=4), 
-p2_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
+p2_err_mat; d=dim, n_kicks_i=16, n_kicks_f=0)
 res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=4), 
-nc_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
+nc_err_mat; d=dim, n_kicks_i=16, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)
@@ -83,7 +83,8 @@ plot!(plt_fit2, Kgrid, ξfit2, lw=2,
         label="fit (ν ≈ $(round(abs(results2.ν),digits=3)))")
 vline!(plt_fit2, [results2.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
 
-display(plot(plt_fit1, plt_fit2, layout=(1,2), size=(1000,400), suptitle="Fit of ξ(K) with offset", 
+display(plot(plt_fit1, plt_fit2, layout=(1,2), size=(1050,550), 
+suptitle=latexstring("\$ ξ(κ)\$ with offset \$d=$(dim)\$, \$a_s=$(a_s)a_0\$"), 
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 
 
