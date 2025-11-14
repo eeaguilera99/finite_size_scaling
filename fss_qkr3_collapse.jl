@@ -18,11 +18,11 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 dim = 3  # spatial dimension
-a_s = 1038  # scattering length label for plots
+a_s = 920  # scattering length label for plots
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), p2_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), nc_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), p2_err_mat; d=dim, n_kicks_i=13, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), nc_err_mat; d=dim, n_kicks_i=13, n_kicks_f=0)
 
 #=
 # plots for ⟨p²⟩
