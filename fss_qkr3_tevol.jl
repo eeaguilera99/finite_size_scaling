@@ -11,8 +11,8 @@ K_c1_i = argmax(xi1)+1
 K_c2_i = argmax(xi2)+1
 
 #Plot straight lines 
-model(t, p) = p[1] .* t .^ (p[3]) .+ p[2]  # y = m*x^(2/a) + b
-guess1 = [1.0, 0.0, 3]  # Initial guess for [m, b, a]
+model(t, p) = p[1] .* t .^ (p[3]) .+ p[2]  # y = m*x^a + b
+guess1 = [1.0, 0.0, 2/3]  # Initial guess for [m, b, a]
 fit1 = curve_fit(model, log.(t_vals), log.(p2_mat[K_c1_i, :]), guess1)
 fit_params1 = coef(fit1)
 fit2 = curve_fit(model, log.(t_vals), log.(nc_mat[K_c2_i, :]), guess1)
