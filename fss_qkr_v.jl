@@ -13,7 +13,7 @@ Implements the Lemarié finite-time-scaling method:
 
 Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 """
-function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
+function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
 
     
     #filter Nkicks range
@@ -83,18 +83,18 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
 
     # 4️⃣ Plots
     if plotshow
-        #=
+        
         # Fig. 13: lnΛ vs K for several t
-        plt1 = plot(title=L"\ln{Λ(K)}"*" for various "*L"t",
-                    xlabel=L"K", ylabel=L"\ln{Λ(K)}", legend=:topleft)
+        plt1 = plot(title=latexstring("\$ln{Λ(K)}\$ vs \$κ\$, \$a_s=$(a_s)a_0\$"),
+                    xlabel=L"κ", ylabel=L"\ln{Λ(K)}", legend=:topleft)
         for j in 1:N
-            plot!(plt1, K_vals, lnΛ[:,j], label="t=$(round(t_vals[j],digits=3))", lw=1.8)
+            scatter!(plt1, K_vals, lnΛ[:,j], label="", lw=1.8)
         end
         
-        vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
-        display(plt1)=#
+        vline!(plt1, [Kc], color=:red, linestyle=:dash, label=latexstring("\$κ_c=$(round(Kc,digits=3))\$"))
+        display(plt1)
 
-        plt2 = plot(title="Linear fits near Δfit=$(ΔKfit)",
+        plt2 = plot(title=latexstring("Linear fits near \$Δκ_{fit}=$(ΔKfit)\$, \$a_s=$(a_s)a_0\$"),
                     xlabel=L"κ", ylabel=L"\ln{Λ(κ)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -103,15 +103,15 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             scatter!(plt2, Kloc, lnΛ[Kfit_interval,j], yerror=ln_Λ_err[Kfit_interval,j], label="", lw=1.8)#t=$(round(t_vals[j],digits=3))
             plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
-        vline!(plt2, [Kc], color=:red, linestyle=:dash, label="κc=$(round(Kc,digits=3))")
+        vline!(plt2, [Kc], color=:red, linestyle=:dash, label=latexstring("\$κ_c=$(round(Kc,digits=3))\$"))
         display(plt2)
         #savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
-                    title="Scaling of slopes", label="data")
+                    title=latexstring("Scaling of slopes \$a_s=$(a_s)a_0\$"), label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
-        plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
+        plot!(plt3, logt, logs_fit, lw=2, label=latexstring("fit \$ν≈$(round(ν,digits=3))\$"))
         display(plt3)
         #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
@@ -123,9 +123,10 @@ end
 
 Kc = 1.276
 dim=3
+a_s = 920
 
-res = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=5), nc_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 1, n_kicks_i=1, n_kicks_f=0)
+res = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), nc_err_mat, dim, a_s;
+                                 Kc = Kc, ΔKfit = 1, n_kicks_i=16, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
