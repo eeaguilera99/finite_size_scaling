@@ -16,15 +16,15 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `shifts::Vector`: Optimal horizontal shifts aᵢ = ln ξ(Kᵢ).
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
-
-dim = 3  # spatial dimension
+dim1 = 3.443
+dim2 = 3.402  # spatial dimension
  # scattering length label for plots
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), 
-p2_err_mat; d=dim, n_kicks_i=4, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), 
-nc_err_mat; d=dim, n_kicks_i=4, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), 
+p2_err_mat; d=dim1, n_kicks_i=32, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), 
+nc_err_mat; d=dim2, n_kicks_i=32, n_kicks_f=0)
 
 #=
 # plots for ⟨p²⟩
@@ -45,19 +45,20 @@ display(plot(plt1, plt2, suptitle=latexstring("Raw data  \$d=$(dim)\$, \$a_s=$(a
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 =#
 #collapse plot
-plt3 = plot(title=L"E_k",
-    xlabel="ln(ξ/N^(1/d))", ylabel="ln(Λ)")
+plt3 = plot(title=latexstring("\$E_k\$, \$d=$(dim1)\$"),
+    xlabel=L"$\ln(ξ/N^{1/d})$", ylabel=L"$ln(Λ)$")
 for (i,K) in enumerate(K_vals)
     plot!(plt3, X1[:] .+ shifts1[i], Y1[i,:], marker=:o, label="")
 end
 
-plt4 = plot(title=L"$1/n_c^2$",
-    xlabel="ln(ξ/N^(1/d))")
+
+plt4 = plot(title=latexstring("\$1/n_c^2\$, \$d=$(dim2)\$"),
+    xlabel=L"$\ln(ξ/N^{1/d})$")
 for (i,K) in enumerate(K_vals)
     plot!(plt4, X2[:] .+ shifts2[i], Y2[i,:], marker=:o, label="")
 end
 
-display(plot(plt3, plt4, suptitle=latexstring("Collapse \$d=$(dim)\$, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
+display(plot(plt3, plt4, suptitle=latexstring("Collapse, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 #savefig(plt4, "fss_collapsed_data_nc2_d$(dim).png")=#
 

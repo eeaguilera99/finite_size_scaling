@@ -2,13 +2,13 @@ include("fss_qkr3_timescaling.jl")
 
 dim = 3
 
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), p2_err_mat; d=dim, n_kicks_i=12, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), nc_err_mat; d=dim, n_kicks_i=12, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), p2_err_mat; d=dim, n_kicks_i=32, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), nc_err_mat; d=dim, n_kicks_i=32, n_kicks_f=0)
 
 xi1 = exp.(shifts1)
 xi2 = exp.(shifts2)
-K_c1_i = argmax(xi1)
-K_c2_i = argmax(xi2)
+K_c1_i = argmax(xi1)+1
+K_c2_i = argmax(xi2)+1
 
 #Plot straight lines 
 model(t, p) = p[1] .* t .+ p[2]  # y = m*x + b

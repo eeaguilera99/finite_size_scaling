@@ -40,14 +40,15 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05, plotshow=true)
 end
 
 
-dim = 3 # spatial dimension
+dim1 = 3.443
+dim2 = 3.402   # spatial dimension
 
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), 
-p2_err_mat; d=dim, n_kicks_i=4, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), 
-nc_err_mat; d=dim, n_kicks_i=4, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), 
+p2_err_mat; d=dim1, n_kicks_i=32, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), 
+nc_err_mat; d=dim2, n_kicks_i=32, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)
@@ -67,7 +68,7 @@ bottom_margin=5Plots.mm, left_margin=5Plots.mm))=#
 Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 plt_fit1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
-                title=L"E_k, \kappa_c"*"≈ $(round(results1.Kc,digits=5))",
+                title=latexstring("\$E_k\$, \$κ_c≈ $(round(results1.Kc,digits=3))\$, \$d=$(dim1)\$"),
                 label="data")
 ξfit1 = (1)./(results1.β0 .+ results1.A .* abs.(Kgrid .- results1.Kc).^(abs(results1.ν)))
 plot!(plt_fit1, Kgrid, ξfit1, lw=2,
@@ -76,7 +77,7 @@ vline!(plt_fit1, [results1.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
 
 plt_fit2 = plot(K_vals, xi2, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
-                title=L"1/nc^2, \kappa_c"*"≈ $(round(results2.Kc,digits=5))",
+                title=latexstring("\$1/n_c^2\$, \$κ_c≈ $(round(results2.Kc,digits=3))\$, \$d=$(dim2)\$"),
                 label="data")
 ξfit2 = (1)./(results2.β0 .+ results2.A .* abs.(Kgrid .- results2.Kc).^(abs(results2.ν)))
 plot!(plt_fit2, Kgrid, ξfit2, lw=2,
@@ -84,7 +85,7 @@ plot!(plt_fit2, Kgrid, ξfit2, lw=2,
 vline!(plt_fit2, [results2.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
 
 display(plot(plt_fit1, plt_fit2, layout=(1,2), size=(1050,550), 
-suptitle=latexstring("\$ ξ(κ)\$ with offset \$d=$(dim)\$, \$a_s=$(a_s)a_0\$"), 
+suptitle=latexstring("\$ ξ(κ)\$ with offset, \$a_s=$(a_s)a_0\$"), 
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 
 
