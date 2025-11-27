@@ -2,9 +2,46 @@ include("fss_qkr3_timescaling.jl")
 
 #Irrelevant scaling parameters
 dim = 3
+
+# Replace with the path to your actual CSV file
+filepath = "irr_scale_data\\param_mR=2.csv"
+
+# Define aliases
+rename_map = Dict("nu" => "α", "c0" => "ψ")
+
+# Read the file manually since it's not a standard CSV
+lines = readlines(filepath)
+
+# Iterate and define variables dynamically
+for line in lines
+    if occursin(":", line)
+        name_val = split(line, ":")
+        varname = strip(name_val[1])
+        valstr = strip(name_val[2])
+        
+        # Rename if applicable
+        varname = get(rename_map, varname, varname)
+
+        if occursin("±", valstr)
+            val, err = strip.(split(valstr, "±"))
+            value = parse(Float64, val)
+            error = parse(Float64, err)
+        else
+            value = parse(Float64, valstr)
+            error = 0.0
+        end
+
+        # Define variables dynamically
+        @eval begin
+            $(Symbol(varname)) = $value
+            $(Symbol(varname * "_err")) = $error
+        end
+    end
+end
+
+#=
 α = 1.5087 
 α_err = 0.0010071
-ν = α/dim
 y = -8.143
 y_err = 0.0
 F00 = -22.784 
@@ -21,7 +58,8 @@ b1_err = 1.3888e-3
 ψ_err = 0.0
 Kc = 1.0801
 Kc_err = 1.6544e-3
-
+=#
+ν = α/dim
 
 t_vals = t_vals[5:end]
 p2_mat = p2_mat[:,5:end]
