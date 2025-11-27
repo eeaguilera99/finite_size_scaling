@@ -6,11 +6,11 @@ dim = 3
 α_err = 0.0010071
 y = -8.143
 y_err = 0.0
-F00 = -22.784
+F00 = -22.784 
 F00_err = 4.5488e-3
 F01 = 1
 F10 = 1
-F11 = -1.2289e1
+F11 = -1.2289e1 
 F11_err = 0.0
 b0 = -4.5853e-2
 b0_err = 1.3437e-3
@@ -26,7 +26,7 @@ t_vals = t_vals[5:end]
 p2_mat = p2_mat[:,5:end]
 
 function XX(K,t)
-    return (b0*(K-Kc)/Kc + b1*((K-Kc)/Kc)^2)*t^(1/α)
+    return (b0*(Kc-K)/Kc)*t^(1/(α))#+ b1*((Kc-K)/Kc)^2
 end
 
 function scaling_funct(K, t)
@@ -37,10 +37,11 @@ function corrected_scaling_funct(K, T, M)
     return M .- F1
 end
 
+
 F = [scaling_funct(k, t) for k in K_vals, t in t_vals]
   #matrix of scaled data
 
-X = [(k-Kc)/Kc*t^(1/α) for k in K_vals, t in t_vals]  #matrix of scaled x-coordinates
+X = [XX(k, t) for k in K_vals, t in t_vals]  #matrix of scaled x-coordinates
 
 
 res, shifts, X1, Y1, Y1err, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
@@ -58,7 +59,8 @@ ln_Λ_c = corrected_scaling_funct(K_vals, t_vals, log.(Λ))
 
 plt2 = plot(title=latexstring("Finite-time scaling with correction \$d=$(dim)\$"),
     xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
-scatter!(vec(-(α/3).*log.(abs.(X))), vec(ln_Λ_c), mc=:red, label="Corrected")
+scatter!(vec(-(α/dim).*log.(abs.(X))), vec(ln_Λ_c), mc=:red, label="Corrected")
 #scatter!(-(α/3).*log.(abs.(X)), F, mc=:blue, label="")
-scatter!(vec(X1 .+ shifts.+0.5), vec(Y1), mc=:green, label="Uncorrected")
+scatter!(vec(X1 .+ shifts), vec(Y1), mc=:blue, label="Uncorrected")
+#xlims!(-1, 7)
 display(plt2)   
