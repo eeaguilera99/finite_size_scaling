@@ -10,7 +10,7 @@ xi2 = exp.(shifts2)
 K_c1_i = argmax(xi1)+1
 K_c2_i = argmax(xi2)+1
 
-#Plot straight lines 
+#fit straight lines 
 model(t, p) = p[1] .* t .+ p[2]  # y = m*x + b
 guess1 = [2/3, 0.0]  # Initial guess for [m, b]
 fit1 = curve_fit(model, log.(t_vals), log.(p2_mat[K_c1_i, :]), guess1)
