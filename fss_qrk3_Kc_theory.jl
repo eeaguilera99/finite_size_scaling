@@ -1,4 +1,4 @@
-include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
+include("fss_qkr3_timescaling_theory.jl")  # for finite_time_scaling
 
 
 """
