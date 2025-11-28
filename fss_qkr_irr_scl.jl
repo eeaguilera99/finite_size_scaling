@@ -126,5 +126,5 @@ plt4 = plot(title="One-parameter scaling collapse vs Corrections",
     xlabel=latexstring("ln \$(ξ/N^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
 scatter!(plt4, vec(X1 .+ [fit_shifts[i] for i in 1:length(K_vals), t in 1:size(X1,2)]), vec(Y1), mc=:red, marker=:o, 
 label=latexstring("\$ξ\$ from corrections"))
-scatter!(plt4, vec(X1 .+ [shifts[i] for i in 1:length(K_vals), t in 1:size(X1,2)]).+ 2.05, vec(Y1), mc=:blue, marker=:o, label="1-param scaling")
+scatter!(plt4, vec(X1 .+ [shifts[i] for i in 1:length(K_vals), t in 1:size(X1,2)]).+ 2.3, vec(Y1), mc=:blue, marker=:o, label="1-param scaling")
 display(plt4)=#

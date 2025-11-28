@@ -20,7 +20,7 @@ X , Y = vec([k for k in K_vals, t in t_vals]), vec([t for t in t_vals, K in K_va
 logΛ = log.(Λ)
 
 b1_0 = 
-p0 = [1, 1.2, 1.5, 1, 1, -1, -1]  # initial guesses
+p0 = [1, 1.2, 1.5, 1, -1, -1, -1]  # initial guesses
 fit = curve_fit(model, [X'; Y'], vec(logΛ), p0)
 pbest = coef(fit)
 b1, Kc, α, F00, ψ, y, F11 = pbest
@@ -31,7 +31,7 @@ for t in 1:length(t_vals)
     plot!(plt1, K_vals, logΛ[:,t], seriestype=:scatter, label="data t=$(t_vals[t])", ms=3)
 end
 display(plt1)
-
+#=
 #plot fit
 plt2 = plot(title="Irelevant scaling fit d=$(dim)", xlabel = "κ", ylabel = "lnΛ")
 for t in 1:length(t_vals)
@@ -43,5 +43,5 @@ end
 display(plt2)
 
 #scatter!(vec(-(α/dim).*log.(abs.(X))), vec(logΛ), mc=:blue, label="Data")
-#plot!(vec(-(α/dim).*log.(abs.(X))), vec(model([X'; Y'], pbest)), mc=:blue, label="Fit")
+#plot!(vec(-(α/dim).*log.(abs.(X))), vec(model([X'; Y'], pbest)), mc=:blue, label="Fit")=#
 
