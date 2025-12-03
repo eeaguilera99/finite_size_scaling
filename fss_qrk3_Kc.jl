@@ -30,12 +30,19 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02)
     covar = estimate_covar(fit)
     perr  = sqrt.(diag(covar))
 
+    # goodness of fit
+    residuals = ξfit .- model(Kfit, pbest)
+    χ2 = sum((residuals ./ model(Kfit, pbest)).^2)
+    dof = length(ξfit) - length(pbest)
+    χ2_red = χ2 / dof
+
     # Unpack results
     β0, A, ν, Kc = pbest
     err_β0, err_A, err_ν, err_Kc = perr
 
+
     return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
-            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc)
+            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc, χ2=χ2, χ2_red=χ2_red)
 end
 
 
@@ -73,5 +80,5 @@ println("κc  ≈ $(results.Kc)  ± $(results.err_Kc)")
 println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
 println("A   ≈ $(results.A)   ± $(results.err_A)")
 println("β_0  ≈ $(results.β0)  ± $(results.err_β0)")
-println("Fit quality: ", s_rel)
+println("χ²  = $(results.χ2),  χ²_red = $(results.χ2_red)")
 

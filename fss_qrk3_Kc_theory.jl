@@ -30,13 +30,19 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05, plotshow=true)
     covar = estimate_covar(fit)
     perr  = sqrt.(diag(covar))
 
+    # goodness of fit
+    residuals = ξfit .- model(Kfit, pbest)
+    χ2 = sum((residuals ./ model(Kfit, pbest)).^2)
+    dof = length(ξfit) - length(pbest)
+    χ2_red = χ2 / dof
+
     # Unpack results
     β0, A, ν, Kc = pbest
     err_β0, err_A, err_ν, err_Kc = perr
 
 
     return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
-            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc)
+            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc, χ2=χ2, χ2_red=χ2_red)
 end
 
 
@@ -96,11 +102,11 @@ println("κc1  ≈ $(results1.Kc)  ± $(results1.err_Kc)")
 println("ν1   ≈ $(results1.ν)   ± $(results1.err_ν)")
 println("A1   ≈ $(results1.A)   ± $(results1.err_A)")
 println("β_01  ≈ $(results1.β0)  ± $(results1.err_β0)")
-println("Fit quality1: ", s_rel1)
+println("χ²1  = $(results1.χ2),  χ²_red1 = $(results1.χ2_red)")
 
 println("\n===== Critical fit results with offset and error bars =====")
 println("κc2  ≈ $(results2.Kc)  ± $(results2.err_Kc)")
 println("ν2   ≈ $(results2.ν)   ± $(results2.err_ν)")
 println("A2   ≈ $(results2.A)   ± $(results2.err_A)")
 println("β_02  ≈ $(results2.β0)  ± $(results2.err_β0)")
-println("Fit quality2: ", s_rel2)        
+println("χ²2  = $(results2.χ2),  χ²_red2 = $(results2.χ2_red)")     
