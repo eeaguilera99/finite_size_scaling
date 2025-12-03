@@ -1,10 +1,10 @@
 include("fss_qkr3_timescaling.jl")
 
 #Irrelevant scaling parameters
-dim = 6
+dim = 4
 
 # Replace with the path to your actual CSV file
-filepath = "irr_scale_data\\param_mR=1.csv"
+filepath = "irr_scale_data\\220\\d=4\\param_mR=3.csv"
 
 # Define aliases
 rename_map = Dict("nu" => "α", "c0" => "ψ")
@@ -39,33 +39,14 @@ for line in lines
     end
 end
 
-#=
-α = 1.5087 
-α_err = 0.0010071
-y = -8.143
-y_err = 0.0
-F00 = -22.784 
-F00_err = 4.5488e-3
-F01 = 1
-F10 = 1
-F11 = -1.2289e1 
-F11_err = 0.0
-b0 = -4.5853e-2
-b0_err = 1.3437e-3
-b1 = 4.5862e-2 
-b1_err = 1.3888e-3
-ψ = -2.1162e1
-ψ_err = 0.0
-Kc = 1.0801
-Kc_err = 1.6544e-3
-=#
 ν = α/dim
 
+#filter Nkicks range
 t_vals = t_vals[5:end]
 p2_mat = p2_mat[:,5:end]
 
 function χ(K)
-    return (b0*-(Kc-K) + 0*(-(Kc-K))^2 + 0*(-(Kc-K))^2)# + b1*((Kc-K)/Kc)^2
+    return (b0*-(Kc-K) + 0*(-(Kc-K))^2 + 0*(-(Kc-K))^2)
 end
 
 function scaling_funct(K, t)
@@ -91,7 +72,7 @@ ln_Λ_c = corrected_scaling_funct(K_vals, t_vals, Y1) #matrix of corrected lnΛ 
 
 
 #plot irr scaling fit results
-plt1 = plot(title=latexstring("Finite-time scaling with correction \$d=$(dim)\$"),
+plt1 = plot(title=latexstring("Finite-time scaling with correction \$a_s=$(a_s)a_0\$, \$d=$(dim)\$"),
     xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
 scatter!(vec(-(ν).*log.(abs.(X))), vec(ln_Λ_c), mc=:red, label="Corrected")
 #scatter!(-(α/3).*log.(abs.(X)), F, mc=:blue, label="")

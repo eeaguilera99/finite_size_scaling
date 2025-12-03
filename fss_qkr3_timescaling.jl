@@ -6,10 +6,10 @@ using LsqFit
 using CSV, DataFrames
 using LaTeXStrings
 
-K_vals = vec(Matrix(CSV.read("data2/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data2/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data2/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+K_vals = vec(Matrix(CSV.read("data2/220/kappa.csv", DataFrame; header=false)))             # Kick strengths
+t_vals = vec(Matrix(CSV.read("data2/220/number_of_kicks.csv", DataFrame; header=false)))  # Times
+p2_mat = Matrix(CSV.read("data2/220/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
+p2_err_mat = Matrix(CSV.read("data2/220/nc_err_matrix.csv", DataFrame; header=false))     # Errors
 
 a_s = 220
 
