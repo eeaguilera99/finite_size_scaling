@@ -94,7 +94,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title=latexstring("Linear fits near \$Δκ_{fit}\$=$(ΔKfit)"),
+        plt2 = plot(title=latexstring("Linear fits near \$a_s=$(a_s)a_0\$ \$Δκ_{fit}\$=$(ΔKfit)"),
                     xlabel=L"κ", ylabel=L"\ln{Λ(κ_c)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -109,7 +109,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
-                    title="Scaling of slopes", label="data")
+                    title="Scaling of slopes \$a_s=$(a_s)a_0\$", label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         display(plt3)
@@ -121,11 +121,11 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
-Kc = 1.277
-dim=3
+Kc = 0.926
+dim = 3
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.1, n_kicks_i=2, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 1.5, n_kicks_i=2, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")

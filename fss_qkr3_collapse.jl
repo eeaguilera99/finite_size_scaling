@@ -17,10 +17,10 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
-dim = 3  # spatial dimension
+dim = 6  # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
 #=
 # Plot before collapse
 plt1 = plot(title="Raw data",
@@ -32,8 +32,8 @@ display(plt1)
 #savefig(plt1, "fss_raw_data_d$(dim).png")=#
 
 # Plot after collapse
-plt2 = plot(title="Data collapse (after optimal shifts) d=$(dim)",
-    xlabel="ln(ξ/N^(1/d))", ylabel="ln(Λ)")
+plt2 = plot(title=latexstring("Data collapse \$d=$(dim)\$, \$a_s=$(a_s)a_0\$"),
+    xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
 for (i,K) in enumerate(K_vals)
     plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
 end

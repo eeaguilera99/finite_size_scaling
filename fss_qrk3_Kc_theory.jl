@@ -40,15 +40,15 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05, plotshow=true)
 end
 
 
-dim1 = 3.443
-dim2 = 3.402   # spatial dimension
+dim1 = 3
+dim2 = 3   # spatial dimension
 
 
 # Perform collapse
 res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), 
-p2_err_mat; d=dim1, n_kicks_i=32, n_kicks_f=0)
+p2_err_mat; d=dim1, n_kicks_i=1, n_kicks_f=0)
 res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), 
-nc_err_mat; d=dim2, n_kicks_i=32, n_kicks_f=0)
+nc_err_mat; d=dim2, n_kicks_i=1, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)

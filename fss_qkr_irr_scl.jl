@@ -1,7 +1,7 @@
 include("fss_qkr3_timescaling.jl")
 
 #Irrelevant scaling parameters
-dim = 3
+dim = 6
 
 # Replace with the path to your actual CSV file
 filepath = "irr_scale_data\\param_mR=1.csv"
@@ -95,7 +95,7 @@ plt1 = plot(title=latexstring("Finite-time scaling with correction \$d=$(dim)\$"
     xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
 scatter!(vec(-(ν).*log.(abs.(X))), vec(ln_Λ_c), mc=:red, label="Corrected")
 #scatter!(-(α/3).*log.(abs.(X)), F, mc=:blue, label="")
-scatter!(vec(X1 .+ shifts) , vec(Y1), mc=:blue, label="Uncorrected")
+scatter!(vec(X1 .+ shifts) .+ 1.21 , vec(Y1), mc=:blue, label="Uncorrected")
 #xlims!(-1, 7)
 display(plt1)
 

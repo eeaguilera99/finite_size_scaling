@@ -15,7 +15,7 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     # Initial guess
     β₀₀ = maximum(xi)*0.5
     A₀  = minimum(xi)
-    ν₀  = 1.5
+    ν₀  = 1
     Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
@@ -35,16 +35,17 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.02, plotshow=true)
     err_β0, err_A, err_ν, err_Kc = perr
 
     if plotshow
+        #=
         # Plot raw data
         plt_raw = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
                        xlabel="K", ylabel="ξ(K)", title="Raw ξ(K) data", label="data")
-        display(plt_raw)
+        display(plt_raw)=#
         
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         plt_fit = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
                        xlabel=L"κ", ylabel=L"ξ(κ)",
-                       title=latexstring("\$ξ(κ)\$ with offset, \$κ_c\$≈$(round(Kc,digits=5))"),
+                       title=latexstring("\$ξ(κ)\$ with offset \$a_s=$(a_s)a_0\$, \$κ_c\$≈$(round(Kc,digits=5))"),
                        label="data")
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         ξfit = (1)./model(Kgrid, pbest)
