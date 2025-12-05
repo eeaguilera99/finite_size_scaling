@@ -6,7 +6,7 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05, plotshow=true)
+function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05)
     xi=(1)./xi
     # Model function
     model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{−ν}
@@ -49,18 +49,21 @@ end
 dim1 = 3
 dim2 = 3   # spatial dimension
 
+#filter Kick strength
+_, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
+K_vals, nc_mat, nc_err_mat = filter_K(K_vals, nc_mat, nc_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), 
-p2_err_mat; d=dim1, n_kicks_i=1, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=0, loc_amp=6), 
-nc_err_mat; d=dim2, n_kicks_i=1, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
+p2_err_mat; d=dim1, n_kicks_i=40, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
+nc_err_mat; d=dim2, n_kicks_i=40, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)
 xi2 = exp.(shifts2)
-results1 = fit_xi_offset_LsqFit(K_vals, xi1; plotshow=true)
-results2 = fit_xi_offset_LsqFit(K_vals, xi2; plotshow=true)
+results1 = fit_xi_offset_LsqFit(K_vals, xi1)
+results2 = fit_xi_offset_LsqFit(K_vals, xi2)
 #=
 # Plot raw data
 plt_raw1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,

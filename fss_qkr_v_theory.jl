@@ -127,15 +127,15 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
 end
 
-Kc_nc = 1.107
-Kc_ek = 1.325
+Kc_nc = 1.25
+Kc_ek = 1.354
 dim=3
 
 
 results1 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), nc_err_mat, dim, a_s;
-                                 Kc = Kc_nc, ΔKfit = 1, n_kicks_i=32, n_kicks_f=0)
+                                 Kc = Kc_nc, ΔKfit = 1, n_kicks_i=18, n_kicks_f=0)
 results2 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), p2_err_mat, dim, a_s; type=false,
-                                 Kc = Kc_ek, ΔKfit = 1, n_kicks_i=32, n_kicks_f=0)
+                                 Kc = Kc_ek, ΔKfit = 1, n_kicks_i=18, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(results1.ν,digits=4)) ± $(round(results1.err_ν,digits=4))")

@@ -8,10 +8,10 @@ using LaTeXStrings
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_920.csv", DataFrame; header=false))
-nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_920.csv", DataFrame; header=false))              # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_220.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-a_s = 920
+a_s = 220
 
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
@@ -73,6 +73,22 @@ function apply_mov_av_matrix(M; p=true, loc_amp=2)
         M[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
     end
     return M
+end
+
+function filter_Nkicks(tt_vals, mat, err_mat; n_kicks_i=1, n_kicks_f=0)
+    n_Nkicks_f = size(tt_vals,1) - n_kicks_f #index to end at
+    tt_vals = tt_vals[n_kicks_i:n_Nkicks_f]
+    mat = mat[:,n_kicks_i:n_Nkicks_f]
+    err_mat = err_mat[:,n_kicks_i:n_Nkicks_f]
+    return tt_vals, mat, err_mat
+end
+
+function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
+    n_kkicks_ff = length(Kk_vals) - n_kkicks_f
+    Kk_vals = Kk_vals[n_kkicks_i:n_kkicks_ff]
+    mat = mat[n_kkicks_i:n_kkicks_ff,:]
+    err_mat = err_mat[n_kkicks_i:n_kkicks_ff,:]
+    return Kk_vals, mat, err_mat
 end
 
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)

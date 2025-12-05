@@ -13,13 +13,26 @@ p2_err_mat = Matrix(CSV.read("data2/220/nc_err_matrix.csv", DataFrame; header=fa
 
 a_s = 220
 
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
-    
-    #filter Nkicks range
+function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
     n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
     t_vals = t_vals[n_kicks_i:n_Nkicks_f]
     p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
     p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
+    return t_vals, p2_mat, p2_err_mat
+end
+
+function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
+    n_kkicks_ff = length(Kk_vals) - n_kkicks_f
+    Kk_vals = Kk_vals[n_kkicks_i:n_kkicks_ff]
+    mat = mat[n_kkicks_i:n_kkicks_ff,:]
+    err_mat = err_mat[n_kkicks_i:n_kkicks_ff,:]
+    return Kk_vals, mat, err_mat
+end
+
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
+    
+    #filter Nkicks range
+    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
 
     M, N = size(p2_mat)
 
