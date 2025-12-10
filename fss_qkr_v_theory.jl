@@ -39,7 +39,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
     lnΛc_vals = similar(t_vals)
     fit_lines = Vector{Tuple{Float64,Float64}}(undef, length(t_vals))  # (intercept,slope)    
 
-
+    #values of K near Kc
     mask_global = abs.(K_vals .- Kc) .<= ΔKfit
     Kfit = K_vals[mask_global]
     if length(Kfit) < 3
@@ -47,6 +47,10 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
     end
     X = Kfit .- Kc
     Kfit_interval = indexin(Kfit, K_vals)
+    
+    # allocate chi2 storage per time and compute per-time linear fits
+    chi2_per_time = zeros(length(t_vals))
+    redchi2_per_time = zeros(length(t_vals))
     for (j,t) in enumerate(t_vals)
         y = lnΛ[mask_global, j]
         # linear regression y = a + b*X
@@ -60,26 +64,53 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
         s_vals[j] = coeffs[2]
         s_errs[j] = sqrt(cov[2,2])
         fit_lines[j] = (coeffs[1], coeffs[2])
+
+        # chi-square for this linear fit using lnΛ measurement errors (guard zeros)
+        σ_y = copy(ln_Λ_err[mask_global, j])
+        pos = σ_y .> 0
+        if any(pos)
+            σ_y[.!pos] .= maximum(σ_y[pos]) + eps()
+        else
+            σ_y .= maximum(abs.(y)) + eps()
+        end
+        chi2_j = sum(((y .- yfit) ./ σ_y).^2)
+        dof_j = length(y) - 2
+        chi2_per_time[j] = chi2_j
+        redchi2_per_time[j] = chi2_j / max(dof_j, 1)
     end
 
-    # 3️⃣ log–log fit of |s(t)| vs ln t
+    # 3️⃣ log–log fit of |s(t)| vs ln t (weighted)
     logt = log.(t_vals)
     logs = log.(abs.(s_vals))
     logs_err = s_errs ./ abs.(s_vals)   # σ(ln s) = σ_s / |s|
     A = hcat(ones(length(logt)), logt)
 
 # Weighted linear regression using weights = 1/σ²
-    W = Diagonal(1.0 ./ (logs_err.^2))
+    # guard logs_err zeros before building W
+    logs_err_safe = copy(logs_err)
+    posl = logs_err_safe .> 0
+    if any(posl)
+        logs_err_safe[.!posl] .= maximum(logs_err_safe[posl]) + eps()
+    else
+        logs_err_safe .= eps()
+    end
+    W = Diagonal(1.0 ./ (logs_err_safe.^2))
     covmat = inv(A' * W * A)
     coeff = covmat * (A' * W * logs) # weighted least squares solution
     logs_fit = A * coeff
     slope = coeff[2]
     slope_err = sqrt(covmat[2,2])
-    ν = 1 / (dim*slope)
-    ν_err = abs(ν^2) * slope_err / dim  # propagate: dν = -(ν²/3)*dslope
+    ν = 1 / (dim * slope)
+    # propagate error: dν/ds = -1/(dim * s^2)
+    ν_err = (1.0 / (dim * slope^2)) * slope_err
 
-    
     intercept = coeff[1]
+
+    # goodness of fit for the ln|s| vs ln t weighted fit
+    resid_logs = logs .- logs_fit
+    chi2 = sum((resid_logs ./ logs_err_safe).^2)
+    dof = length(logs) - 2
+    reduced_chi2 = chi2 / max(dof, 1)
 
     # 4️⃣ Plots
     if plotshow
@@ -122,20 +153,27 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
 
     end
 
-    return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
+        return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
             s_vals=s_vals, s_errs=s_errs,
-            lnΛc_vals=lnΛc_vals, fit_lines=fit_lines)
+            lnΛc_vals=lnΛc_vals, fit_lines=fit_lines,
+            chi2_loglog=chi2, redchi2_loglog=reduced_chi2,
+            chi2_per_time=chi2_per_time, redchi2_per_time=redchi2_per_time)
 end
 
-Kc_nc = 1.25
-Kc_ek = 1.354
-dim=3
+Kc_nc = 1.291
+Kc_ek = 0.855
+dim = 3
 
 
-results1 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), nc_err_mat, dim, a_s;
-                                 Kc = Kc_nc, ΔKfit = 1, n_kicks_i=18, n_kicks_f=0)
-results2 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), p2_err_mat, dim, a_s; type=false,
-                                 Kc = Kc_ek, ΔKfit = 1, n_kicks_i=18, n_kicks_f=0)
+results1 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=4), nc_err_mat, dim, a_s;
+                                 Kc = Kc_nc, ΔKfit = 1, n_kicks_i=3, n_kicks_f=0)
+#results2 = finite_time_linear_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=0, loc_amp=6), p2_err_mat, dim, a_s; type=false,
+#                                 Kc = Kc_ek, ΔKfit = 0.5, n_kicks_i=3, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(results1.ν,digits=4)) ± $(round(results1.err_ν,digits=4))")
+#println("Goodness fit per time")
+#println("χ2 per time = $(round(results1.chi2_per_time, digits=4))")
+#println("χ2 per time red = $(round(results1.redchi2_per_time, digits=4))")
+println("χ2 loglog = $(round(results1.chi2_loglog ,digits=4))")
+println("χ2 log log red = $(round(results1.redchi2_loglog, digits=4))")
