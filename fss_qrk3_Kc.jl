@@ -49,7 +49,7 @@ end
 dim = 3 # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
+res, shifts, X, Y, Yerr, s_rel, shifts_err = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 # ===== Example usage =====
 xi = exp.(shifts)
 results = fit_xi_offset_LsqFit(K_vals, xi)
@@ -64,7 +64,7 @@ display(plt_raw)=#
 Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 plt_fit = plot(K_vals, xi, seriestype=:scatter, ms=6,
     xlabel=L"κ", ylabel=L"ξ(κ)",
-    title=latexstring("\$ξ(κ)\$ with offset \$a_s=$(a_s)a_0\$, \$κ_c\$≈$(round(results.Kc,digits=5))"),
+    title=latexstring("\$ξ(κ)\$ \$a_s=$(a_s)a_0\$, \$κ_c\$≈$(round(results.Kc,digits=5))"),
     label="data")
 Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 ξfit = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
@@ -81,4 +81,7 @@ println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
 println("A   ≈ $(results.A)   ± $(results.err_A)")
 println("β_0  ≈ $(results.β0)  ± $(results.err_β0)")
 println("χ²  = $(results.χ2),  χ²_red = $(results.χ2_red)")
-
+#=
+#save data
+d1 = DataFrame(xi', :auto)
+CSV.write("ξ(k)_data_220.csv", d1)=#

@@ -38,6 +38,9 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
     s_errs = similar(t_vals)
     lnΛc_vals = similar(t_vals)
     fit_lines = Vector{Tuple{Float64,Float64}}(undef, length(t_vals))  # (intercept,slope)    
+    # allocate chi2 storage per time and compute per-time linear fits
+    chi2_per_time = zeros(length(t_vals))
+    redchi2_per_time = zeros(length(t_vals))
 
     #values of K near Kc
     mask_global = abs.(K_vals .- Kc) .<= ΔKfit
@@ -48,9 +51,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
     X = Kfit .- Kc
     Kfit_interval = indexin(Kfit, K_vals)
     
-    # allocate chi2 storage per time and compute per-time linear fits
-    chi2_per_time = zeros(length(t_vals))
-    redchi2_per_time = zeros(length(t_vals))
+
     for (j,t) in enumerate(t_vals)
         y = lnΛ[mask_global, j]
         # linear regression y = a + b*X
@@ -65,6 +66,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
         s_errs[j] = sqrt(cov[2,2])
         fit_lines[j] = (coeffs[1], coeffs[2])
 
+        #=
         # chi-square for this linear fit using lnΛ measurement errors (guard zeros)
         σ_y = copy(ln_Λ_err[mask_global, j])
         pos = σ_y .> 0
@@ -76,7 +78,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
         chi2_j = sum(((y .- yfit) ./ σ_y).^2)
         dof_j = length(y) - 2
         chi2_per_time[j] = chi2_j
-        redchi2_per_time[j] = chi2_j / max(dof_j, 1)
+        redchi2_per_time[j] = chi2_j / max(dof_j, 1)=#
     end
 
     # 3️⃣ log–log fit of |s(t)| vs ln t (weighted)
@@ -161,7 +163,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
 end
 
 Kc_nc = 1.291
-Kc_ek = 0.855
+#Kc_ek = 0.855
 dim = 3
 
 
@@ -175,5 +177,6 @@ println("ν  = $(round(results1.ν,digits=4)) ± $(round(results1.err_ν,digits=
 #println("Goodness fit per time")
 #println("χ2 per time = $(round(results1.chi2_per_time, digits=4))")
 #println("χ2 per time red = $(round(results1.redchi2_per_time, digits=4))")
+println("Goodness of the fit")
 println("χ2 loglog = $(round(results1.chi2_loglog ,digits=4))")
 println("χ2 log log red = $(round(results1.redchi2_loglog, digits=4))")

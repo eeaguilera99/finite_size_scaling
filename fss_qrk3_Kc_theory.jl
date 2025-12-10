@@ -16,7 +16,8 @@ function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05)
     β₀₀ = minimum(xi)*0.5
     A₀  = maximum(xi)
     ν₀  = 0.5
-    Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
+    Kc₀ = K_vals[argmin(xi)+1]  # where ξ is largest
+    println(Kc₀)
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
@@ -54,10 +55,10 @@ _, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kki
 K_vals, nc_mat, nc_err_mat = filter_K(K_vals, nc_mat, nc_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
-p2_err_mat; d=dim1, n_kicks_i=40, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
-nc_err_mat; d=dim2, n_kicks_i=40, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=4), 
+p2_err_mat; d=dim1, n_kicks_i=3, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=4), 
+nc_err_mat; d=dim2, n_kicks_i=3, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)
