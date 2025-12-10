@@ -5,13 +5,14 @@ using Plots
 using LsqFit
 using CSV, DataFrames
 using LaTeXStrings
+using ForwardDiff
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_220.csv", DataFrame; header=false))
-nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))              # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_1038.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_1038.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-a_s = 220
+a_s = 1038
 
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
@@ -150,6 +151,27 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     # Minimize
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
+    a_free_opt = Optim.minimizer(res)
+    
+    #compute erros for shifts
+    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
+        H = ForwardDiff.hessian(constrained_cost, a_free_opt)
+        # Regularize if needed
+        H = Symmetric(H)
+        # Invert Hessian; if ill-conditioned, use pinv
+        Hinv = try
+            inv(H)
+        catch
+            pinv(H)
+        end
+        # 1σ from curvature (up to a global scale factor if objective not true χ²)
+        errs_free = sqrt.(diag(Hinv))
+        return errs_free, H, Hinv
+    end
+
+    errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
+    shiftserr = vcat(0.0, errs_free)
+    
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
@@ -158,7 +180,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return res, shifts, X, Y, Yerr, sX_rel
+    return res, shifts, shiftserr, X, Y, Yerr, sX_rel
 end
 
 function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
