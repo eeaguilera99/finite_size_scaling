@@ -9,10 +9,10 @@ using ForwardDiff
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_220.csv", DataFrame; header=false))
-nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))              # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_775.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_775.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-a_s = 220
+a_s = 775
 
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
@@ -71,7 +71,7 @@ end
 # Apply moving average to each row of a matrix
 function apply_mov_av_matrix(M; p=true, loc_amp=2)
     M_avg = similar(M)
-    for i in 1:size(M,1)
+    for i in axes(M,1)
         M_avg[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
     end
     return M_avg
@@ -180,7 +180,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
             pinv(H)
         end
         # 1σ from curvature (up to a global scale factor if objective not true χ²)
-        errs_free = sqrt.(diag(Hinv))
+        errs_free = sqrt.(abs.(diag(Hinv)))
         return errs_free, H, Hinv
     end
 

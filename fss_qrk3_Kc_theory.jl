@@ -20,12 +20,12 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1, exclude_tol_frac=
         model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{ν}
         names = ["β₀", "A", "ν", "Kc"]
 
-    # Initial guess
-    β₀₀ = minimum(xi)*0.5
-    A₀  = maximum(xi)
-    ν₀  = 0.5
-    Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
-    p0 = [β₀₀, A₀, ν₀, Kc₀]
+        # Initial guess
+        β₀₀ = minimum(u)*0.5
+        A₀  = maximum(u)
+        ν₀  = 0.5
+        Kc₀ = K_vals[argmin(u)]  # where ξ is largest
+        p0 = [β₀₀, A₀, ν₀, Kc₀]
 
         # Mask out values too close to trial Kc₀
         ΔK = maximum(K_vals) - minimum(K_vals)
@@ -63,18 +63,18 @@ dim2 = 3   # spatial dimension
 
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
-p2_err_mat; d=dim1, n_kicks_i=40, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
-nc_err_mat; d=dim2, n_kicks_i=40, n_kicks_f=0)
+#_, shifts1, shifts1err, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), 
+#p2_err_mat; d=dim1, n_kicks_i=8, n_kicks_f=0)
+_, shifts2, shifts2err, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), 
+nc_err_mat; d=dim2, n_kicks_i=8, n_kicks_f=0)
 
 # ===== Example usage =====
-xi1 = exp.(shifts1)
-xi1err = xi1.*shifts1err
+#xi1 = exp.(shifts1)
+#xi1err = xi1.*shifts1err
 xi2 = exp.(shifts2)
 xi2err = xi2.*shifts2err
-results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err; n_k_filter=1)
-results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err; n_k_filter=1)
+#results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err; n_k_filter=2)
+results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err; n_k_filter=2)
 #=
 # Plot raw data
 plt_raw1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
@@ -86,6 +86,7 @@ bottom_margin=5Plots.mm, left_margin=5Plots.mm))=#
         
 # Plot fit
 Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
+#=
 plt_fit1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
                 title=latexstring("\$E_k\$, \$κ_c≈ $(round(results1.Kc,digits=3))\$, \$d=$(dim1)\$"),
@@ -93,7 +94,7 @@ plt_fit1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
 ξfit1 = (1)./(results1.β0 .+ results1.A .* abs.(Kgrid .- results1.Kc).^(abs(results1.ν)))
 plot!(plt_fit1, Kgrid, ξfit1, lw=2,
         label="fit (ν ≈ $(round(abs(results1.ν),digits=3)))")
-vline!(plt_fit1, [results1.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+vline!(plt_fit1, [results1.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")=#
 
 plt_fit2 = plot(K_vals, xi2, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
@@ -103,20 +104,21 @@ plt_fit2 = plot(K_vals, xi2, seriestype=:scatter, ms=6,
 plot!(plt_fit2, Kgrid, ξfit2, lw=2,
         label="fit (ν ≈ $(round(abs(results2.ν),digits=3)))")
 vline!(plt_fit2, [results2.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+display(plt_fit2)
 
-display(plot(plt_fit1, plt_fit2, layout=(1,2), size=(1050,550), 
+#=display(plot(plt_fit1, plt_fit2, layout=(1,2), size=(1050,550), 
 suptitle=latexstring("\$ ξ(κ)\$ with offset, \$a_s=$(a_s)a_0\$"), 
-bottom_margin=5Plots.mm, left_margin=5Plots.mm))
+bottom_margin=5Plots.mm, left_margin=5Plots.mm))=#
 
 
 #println(results)
-
+#=
 println("\n===== Critical fit results with offset and error bars =====")
 println("κc1  ≈ $(results1.Kc)  ± $(results1.err_Kc)")
 println("ν1   ≈ $(results1.ν)   ± $(results1.err_ν)")
 println("A1   ≈ $(results1.A)   ± $(results1.err_A)")
 println("β_01  ≈ $(results1.β0)  ± $(results1.err_β0)")
-println("χ²1  = $(results1.χ2),  χ²_red1 = $(results1.χ2_red)")
+println("χ²1  = $(results1.χ2),  χ²_red1 = $(results1.χ2_red)")=#
 
 println("\n===== Critical fit results with offset and error bars =====")
 println("κc2  ≈ $(results2.Kc)  ± $(results2.err_Kc)")
