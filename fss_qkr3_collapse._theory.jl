@@ -23,11 +23,18 @@ dim2 = 3  # spatial dimension
 _, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=1, n_kkicks_f=0)
 K_vals, nc_mat, nc_err_mat = filter_K(K_vals, nc_mat, nc_err_mat; n_kkicks_i=1, n_kkicks_f=0)
 
+#Perform adaptive moving avg
+p2_mat_avg = apply_mov_av_matrix(p2_mat, p=true, loc_amp=2)
+corr_p2 = trend_rep_avg(p2_mat, p2_mat_avg)
+nc_mat_avg = apply_mov_av_matrix(nc_mat, p=true, loc_amp=2)
+corr_nc = trend_rep_avg(nc_mat, nc_mat_avg)
+
+
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=6), 
-p2_err_mat; d=dim1, n_kicks_i=8, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=6), 
-nc_err_mat; d=dim2, n_kicks_i=8, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
+p2_err_mat; d=dim1, n_kicks_i=40, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
+nc_err_mat; d=dim2, n_kicks_i=40, n_kicks_f=0)
 
 #=
 # plots for ⟨p²⟩
@@ -65,6 +72,9 @@ end
 display(plot(plt3, plt4, suptitle=latexstring("Collapse, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 #savefig(plt4, "fss_collapsed_data_nc2_d$(dim).png")=#
+
+plt5 = plot(title="Correlations between original and avg data", xlabel="κ", ylabel="corr")
+plot!(plt5, K_vals, [corr_p2, corr_nc], seriestype=:scatter, label=["p2" "nc"])
 
 println("Fit quality 1: ", s_rel1)
 println("Fit quality 2: ", s_rel2)

@@ -5,13 +5,14 @@ using Plots
 using LsqFit
 using CSV, DataFrames
 using LaTeXStrings
+using ForwardDiff
 
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
-p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_1038.csv", DataFrame; header=false))
-nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_1038.csv", DataFrame; header=false))              # ⟨p²⟩ values
+p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_220.csv", DataFrame; header=false))
+nc_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_220.csv", DataFrame; header=false))              # ⟨p²⟩ values
 #p2_err_mat = Matrix(CSV.read("data2/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-a_s = 1038
+a_s = 220
 
 "Theory values of time are scaled, we revert them for dimension d1
 For p2 values, the matrix is scaled but also rows are t values and columns are k values, we revert and transpose for dimension d2"
@@ -37,7 +38,7 @@ function adaptive_moving_average(y; p=true, loc_amp=2, min_win=3, max_win=15, ε
         smooth = similar(y)
 
         # robust scale: avoid global outlier domination
-        global_scale = max(maximum(abs.(y)), ε)
+        global_scale = max(maximum(abs.(y)), ε)#prevent one big spike from dominating the amplitude scaling
 
         for i in 1:N
             # small probe window to estimate local amplitude (safe clamp)
@@ -58,7 +59,7 @@ function adaptive_moving_average(y; p=true, loc_amp=2, min_win=3, max_win=15, ε
             win_stop  = min(N, i + hw)
             win = win_start:win_stop
 
-            smooth[i] = mean(view(y, win))
+            smooth[i] = mean(view(y, win))#computes the avg
         end
 
         return smooth
@@ -69,10 +70,25 @@ end
 
 # Apply moving average to each row of a matrix
 function apply_mov_av_matrix(M; p=true, loc_amp=2)
+    M_avg = similar(M)
     for i in 1:size(M,1)
-        M[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
+        M_avg[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
     end
-    return M
+    return M_avg
+end
+
+# compute correlations between avg signals
+function trend_rep_avg(mat, mat_avg)
+    if size(mat,1) == size(mat_avg,1)
+        N = size(mat,1)
+        correlations = zeros(N)
+        for i in 1:N
+            correlations[i] = cor(mat[i,:], mat_avg[i,:])
+        end
+        return correlations
+    else
+        println("Different inputs shapes")
+    end 
 end
 
 function filter_Nkicks(tt_vals, mat, err_mat; n_kicks_i=1, n_kicks_f=0)
@@ -150,6 +166,27 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     # Minimize
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
+    a_free_opt = Optim.minimizer(res)
+    
+    #compute erros for shifts
+    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
+        H = ForwardDiff.hessian(constrained_cost, a_free_opt)
+        # Regularize if needed
+        H = Symmetric(H)
+        # Invert Hessian; if ill-conditioned, use pinv
+        Hinv = try
+            inv(H)
+        catch
+            pinv(H)
+        end
+        # 1σ from curvature (up to a global scale factor if objective not true χ²)
+        errs_free = sqrt.(diag(Hinv))
+        return errs_free, H, Hinv
+    end
+
+    errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
+    shiftserr = vcat(0.0, errs_free)
+    
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
@@ -158,7 +195,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return res, shifts, X, Y, Yerr, sX_rel
+    return res, shifts, shiftserr, X, Y, Yerr, sX_rel
 end
 
 function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
