@@ -6,34 +6,36 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi; exclude_tol_frac=0.05)
-    xi=(1)./xi
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; exclude_tol_frac=0.02)
+    u = (1)./xi
+    uerr = u.^2 .*xierr
     # Model function
-    model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{−ν}
+    model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{ν}
     names = ["β₀", "A", "ν", "Kc"]
 
     # Initial guess
-    β₀₀ = minimum(xi)*0.5
-    A₀  = maximum(xi)
+    β₀₀ = maximum(u)*0.5
+    A₀  = minimum(u)
     ν₀  = 0.5
-    Kc₀ = K_vals[argmin(xi)]  # where ξ is largest
+    Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
     ΔK = maximum(K_vals) - minimum(K_vals)
     mask = abs.(K_vals .- Kc₀) .> exclude_tol_frac*ΔK
-    Kfit, ξfit = K_vals[mask], xi[mask]
+    Kfit, ufit, uerrfit = K_vals[mask], u[mask], uerr[mask]
 
     # Perform nonlinear least squares fit
-    fit = curve_fit(model, Kfit, ξfit, p0)
+    fit = curve_fit(model, Kfit, ufit, p0)
     pbest = coef(fit)
     covar = estimate_covar(fit)
     perr  = sqrt.(diag(covar))
-
+    
+    
     # goodness of fit
-    residuals = ξfit .- model(Kfit, pbest)
-    χ2 = sum((residuals ./ model(Kfit, pbest)).^2)
-    dof = length(ξfit) - length(pbest)
+    residuals = ufit .- model(Kfit, pbest)
+    χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
+    dof = length(ufit) - length(pbest)
     χ2_red = χ2 / dof
 
     # Unpack results
@@ -54,16 +56,18 @@ _, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kki
 K_vals, nc_mat, nc_err_mat = filter_K(K_vals, nc_mat, nc_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
+res1, shifts1, shifts1err, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
 p2_err_mat; d=dim1, n_kicks_i=40, n_kicks_f=0)
-res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
+res2, shifts2, shifts2err, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=true, loc_amp=2), 
 nc_err_mat; d=dim2, n_kicks_i=40, n_kicks_f=0)
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)
+xi1err = xi1.*shifts1err
 xi2 = exp.(shifts2)
-results1 = fit_xi_offset_LsqFit(K_vals, xi1)
-results2 = fit_xi_offset_LsqFit(K_vals, xi2)
+xi2err = xi2.*shifts2err
+results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err)
+results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err)
 #=
 # Plot raw data
 plt_raw1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,

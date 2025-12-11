@@ -20,7 +20,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 dim = 3 # spatial dimension
 
 # Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+res, shifts, shiftserr, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 #=
 # Plot before collapse
 plt1 = plot(title="Raw data",
@@ -41,7 +41,7 @@ display(plt2)
 #savefig(plt2, "fss_collapsed_data_d$(dim).png")
 
 println("Fit quality: ", s_rel)
-
+#=
 #write csv file with scaling data
 df1 = DataFrame(Y, :auto)
 CSV.write("logΛ_220_d=3.csv", df1)
@@ -50,4 +50,4 @@ df2 = DataFrame(X, :auto)
 CSV.write("logN^1d_220_d=3.csv", df2)
 
 df3 = DataFrame(shifts', :auto)
-CSV.write("logξ_220_d=3.csv", df3)
+CSV.write("logξ_220_d=3.csv", df3)=#
