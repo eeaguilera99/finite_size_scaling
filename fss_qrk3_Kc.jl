@@ -6,7 +6,15 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi, xierr; exclude_tol_frac=0.02)
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2, exclude_tol_frac=0.02)
+
+    #filter points for fit    
+    if n_k_filter != 1    
+            xi = xi[n_k_filter:end]
+            xierr = xierr[n_k_filter:end]
+            K_vals = K_vals[n_k_filter:end]
+    end
+
     u = (1)./xi
     uerr = u.^2 .*xierr
     # Model function
@@ -17,7 +25,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; exclude_tol_frac=0.02)
     β₀₀ = maximum(u)*0.5
     A₀  = minimum(u)
     ν₀  = 1
-    Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
+    Kc₀ = K_vals[argmin(u)]  # where ξ is largest
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
@@ -33,7 +41,11 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; exclude_tol_frac=0.02)
 
     # goodness of fit
     residuals = ufit .- model(Kfit, pbest)
-    χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
+    if uerr[1] == 0.0
+        χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
+    else
+        χ2 = sum((residuals ./ uerrfit).^2)
+    end
     dof = length(ufit) - length(pbest)
     χ2_red = χ2 / dof
 
@@ -48,14 +60,15 @@ end
 
 
 dim = 3 # spatial dimension
-
+#K_vals, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
 res, shifts, shiftserr, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 # ===== Example usage =====
+
 xi = exp.(shifts)
 xierr = (xi.*shiftserr)  #error propagation
-results = fit_xi_offset_LsqFit(K_vals, xi, xierr)#exclude frist point from fit
+results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1)#exclude frist point from fit
 
 #=
 # Plot raw data

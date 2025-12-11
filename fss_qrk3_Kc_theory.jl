@@ -6,54 +6,61 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi, xierr; exclude_tol_frac=0.02)
-    u = (1)./xi
-    uerr = u.^2 .*xierr
-    # Model function
-    model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{ν}
-    names = ["β₀", "A", "ν", "Kc"]
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1, exclude_tol_frac=0.02)
+        #filter points for fit    
+        if n_k_filter != 1    
+                xi = xi[n_k_filter:end]
+                xierr = xierr[n_k_filter:end]
+                K_vals = K_vals[n_k_filter:end]
+        end
 
-    # Initial guess
-    β₀₀ = maximum(u)*0.5
-    A₀  = minimum(u)
-    ν₀  = 0.5
-    Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
-    p0 = [β₀₀, A₀, ν₀, Kc₀]
+        u = (1)./xi
+        uerr = u.^2 .*xierr
+        # Model function
+        model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{ν}
+        names = ["β₀", "A", "ν", "Kc"]
 
-    # Mask out values too close to trial Kc₀
-    ΔK = maximum(K_vals) - minimum(K_vals)
-    mask = abs.(K_vals .- Kc₀) .> exclude_tol_frac*ΔK
-    Kfit, ufit, uerrfit = K_vals[mask], u[mask], uerr[mask]
+        # Initial guess
+        β₀₀ = maximum(u)*0.5
+        A₀  = minimum(u)
+        ν₀  = 1
+        Kc₀ = K_vals[argmin(u)]  # where ξ is largest
+        p0 = [β₀₀, A₀, ν₀, Kc₀]
 
-    # Perform nonlinear least squares fit
-    fit = curve_fit(model, Kfit, ufit, p0)
-    pbest = coef(fit)
-    covar = estimate_covar(fit)
-    perr  = sqrt.(diag(covar))
-    
-    
-    # goodness of fit
-    residuals = ufit .- model(Kfit, pbest)
-    χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
-    dof = length(ufit) - length(pbest)
-    χ2_red = χ2 / dof
+        # Mask out values too close to trial Kc₀
+        ΔK = maximum(K_vals) - minimum(K_vals)
+        mask = abs.(K_vals .- Kc₀) .> exclude_tol_frac*ΔK
+        Kfit, ufit, uerrfit = K_vals[mask], u[mask], uerr[mask]
 
-    # Unpack results
-    β0, A, ν, Kc = pbest
-    err_β0, err_A, err_ν, err_Kc = perr
+        # Perform nonlinear least squares fit
+        fit = curve_fit(model, Kfit, ufit, p0)
+        pbest = coef(fit)
+        covar = estimate_covar(fit)
+        perr  = sqrt.(diag(covar))
+
+        # goodness of fit
+        residuals = ufit .- model(Kfit, pbest)
+        if uerr[1] == 0.0
+                χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
+        else
+                χ2 = sum((residuals ./ uerrfit).^2)
+        end
+        dof = length(ufit) - length(pbest)
+        χ2_red = χ2 / dof
+
+        # Unpack results
+        β0, A, ν, Kc = pbest
+        err_β0, err_A, err_ν, err_Kc = perr
 
 
-    return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
-            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc, χ2=χ2, χ2_red=χ2_red)
+        return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
+                err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc, χ2=χ2, χ2_red=χ2_red)
 end
 
 
 dim1 = 3
 dim2 = 3   # spatial dimension
 
-#filter Kick strength
-_, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
-K_vals, nc_mat, nc_err_mat = filter_K(K_vals, nc_mat, nc_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
 res1, shifts1, shifts1err, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=true, loc_amp=2), 
@@ -66,8 +73,8 @@ xi1 = exp.(shifts1)
 xi1err = xi1.*shifts1err
 xi2 = exp.(shifts2)
 xi2err = xi2.*shifts2err
-results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err)
-results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err)
+results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err; n_k_filter=1)
+results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err; n_k_filter=1)
 #=
 # Plot raw data
 plt_raw1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
