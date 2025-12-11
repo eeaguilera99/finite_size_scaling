@@ -25,7 +25,8 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2, exclude_tol_frac=
     β₀₀ = maximum(u)*0.5
     A₀  = minimum(u)
     ν₀  = 1
-    Kc₀ = K_vals[argmin(u)]  # where ξ is largest
+    Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
+    println(Kc₀)
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
@@ -63,12 +64,12 @@ dim = 3 # spatial dimension
 #K_vals, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-res, shifts, shiftserr, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+_, shifts, shiftserr, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 # ===== Example usage =====
 
 xi = exp.(shifts)
 xierr = (xi.*shiftserr)  #error propagation
-results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1)#exclude frist point from fit
+results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2)#exclude frist point from fit
 
 #=
 # Plot raw data
