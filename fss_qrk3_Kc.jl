@@ -64,7 +64,8 @@ dim = 3 # spatial dimension
 #K_vals, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-_, shifts, shiftserr, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+_, shifts, _, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+shiftserr = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)[2]
 # ===== Example usage =====
 
 xi = exp.(shifts)

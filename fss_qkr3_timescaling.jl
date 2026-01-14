@@ -32,7 +32,7 @@ function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
     return Kk_vals, mat, err_mat
 end
 
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n_kicks_i=1, n_kicks_f=0)
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3, n_kicks_i=1, n_kicks_f=0)
     
     #filter Nkicks range
     t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
@@ -91,7 +91,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     a_free_opt = Optim.minimizer(res)
     
     #compute erros for shifts
-    #=function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
+    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
         H = ForwardDiff.hessian(constrained_cost, a_free_opt)
         # Regularize if needed
         H = Symmetric(H)
@@ -107,28 +107,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     end
 
     errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
-    shiftserr = vcat(0.0, errs_free)=#
-
-    function shifts_parametric_mc(p2_mat, p2_err_mat; nbins=30, nmc=500, rng=MersenneTwister(0))
-        all_shifts = zeros(nmc, M)
-
-        for m in 1:nmc
-            # Sample synthetic dataset
-            noise = rand!(rng, Normal(), similar(p2_mat)) .* p2_err_mat
-            p2_syn = p2_mat .+ noise
-
-            # Ensure positivity (log will be used downstream)
-            p2_syn = max.(p2_syn, eps())
-
-            all_shifts[m, :] .= shifts
-        end
-
-        mean_shifts = vec(mean(all_shifts, dims=1))
-        std_shifts  = vec(std(all_shifts, dims=1))
-        return mean_shifts, std_shifts, all_shifts
-    end
-
-    shiftserr = shifts_parametric_mc(p2_mat, p2_err_mat; nbins=nbins, nmc=1000)[2]
+    shiftserr = vcat(0.0, errs_free)
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
@@ -138,6 +117,26 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
 
     # === Return everything
     return res, shifts, shiftserr, X, Y, Yerr, sX_rel
+end
+
+function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100, nmc=500, rng=MersenneTwister(0))
+    M, N = size(p2_mat)
+    all_shifts = zeros(nmc, M)
+
+    for m in 1:nmc
+        # Sample synthetic dataset
+        noise = rand!(rng, Normal(), similar(p2_mat)) .* p2_err_mat
+        p2_syn = p2_mat .+ noise
+
+        # Ensure positivity (log will be used downstream)
+        p2_syn = max.(p2_syn, eps())
+        _, shifts_syn, _, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
+        all_shifts[m, :] .= shifts_syn
+    end
+
+    mean_shifts = vec(mean(all_shifts, dims=1))
+    std_shifts  = vec(std(all_shifts, dims=1))
+    return mean_shifts, std_shifts, all_shifts
 end
 
 function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
