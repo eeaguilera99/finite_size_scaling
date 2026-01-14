@@ -128,7 +128,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
         return mean_shifts, std_shifts, all_shifts
     end
 
-    shiftserr = shifts_parametric_mc(p2_mat, p2_err_mat; nbins=nbins, nmc=200)[2]
+    shiftserr = shifts_parametric_mc(p2_mat, p2_err_mat; nbins=nbins, nmc=1000)[2]
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
