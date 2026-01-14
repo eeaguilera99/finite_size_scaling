@@ -50,4 +50,7 @@ df2 = DataFrame(X, :auto)
 CSV.write("logN^1d_220_d=3.csv", df2)
 
 df3 = DataFrame(shifts', :auto)
-CSV.write("logξ_220_d=3.csv", df3)=#
+CSV.write("logξ_220_d=3.csv", df3)
+
+df4 = DataFrame(Yerr', :auto)
+CSV.write("logΛ_err_220_d=3.csv", df4)=#

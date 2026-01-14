@@ -7,12 +7,14 @@ using CSV, DataFrames
 using LaTeXStrings
 using ForwardDiff 
 
-K_vals = vec(Matrix(CSV.read("data2/220/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data2/220/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data2/220/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-p2_err_mat = Matrix(CSV.read("data2/220/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-
 a_s = 220
+
+K_vals = vec(Matrix(CSV.read("data2/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
+t_vals = vec(Matrix(CSV.read("data2/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
+p2_mat = Matrix(CSV.read("data2/$(a_s)/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
+p2_err_mat = Matrix(CSV.read("data2/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+
+
 
 function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
     n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at

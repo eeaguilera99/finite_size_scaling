@@ -147,11 +147,11 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
             chi2_per_time=chi2_per_time, redchi2_per_time=redchi2_per_time)
 end
 
-Kc = 1.137
+Kc = 0.926
 dim = 3
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=5, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=2, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")
