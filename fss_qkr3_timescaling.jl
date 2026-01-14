@@ -1,5 +1,5 @@
 using LinearAlgebra
-using Statistics
+using Statistics, Random, Distributions
 using Optim
 using Plots
 using LsqFit
@@ -91,7 +91,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     a_free_opt = Optim.minimizer(res)
     
     #compute erros for shifts
-    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
+    #=function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
         H = ForwardDiff.hessian(constrained_cost, a_free_opt)
         # Regularize if needed
         H = Symmetric(H)
@@ -107,7 +107,28 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     end
 
     errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
-    shiftserr = vcat(0.0, errs_free)
+    shiftserr = vcat(0.0, errs_free)=#
+
+    function shifts_parametric_mc(p2_mat, p2_err_mat; nbins=30, nmc=500, rng=MersenneTwister(0))
+        all_shifts = zeros(nmc, M)
+
+        for m in 1:nmc
+            # Sample synthetic dataset
+            noise = rand!(rng, Normal(), similar(p2_mat)) .* p2_err_mat
+            p2_syn = p2_mat .+ noise
+
+            # Ensure positivity (log will be used downstream)
+            p2_syn = max.(p2_syn, eps())
+
+            all_shifts[m, :] .= shifts
+        end
+
+        mean_shifts = vec(mean(all_shifts, dims=1))
+        std_shifts  = vec(std(all_shifts, dims=1))
+        return mean_shifts, std_shifts, all_shifts
+    end
+
+    shiftserr = shifts_parametric_mc(p2_mat, p2_err_mat; nbins=nbins, nmc=200)[2]
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
