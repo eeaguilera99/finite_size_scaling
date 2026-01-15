@@ -25,7 +25,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2, exclude_tol_frac=
     β₀₀ = minimum(u)*0.5
     A₀  = maximum(u)
     ν₀  = 1
-    Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
+    Kc₀ = K_vals[argmin(u)]  # where ξ is largest
     println(Kc₀)
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
@@ -64,7 +64,7 @@ dim = 3 # spatial dimension
 #K_vals, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
 
 # Perform collapse
-_, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
+_, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
 shiftserr = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)[2]
 # ===== Example usage =====
 

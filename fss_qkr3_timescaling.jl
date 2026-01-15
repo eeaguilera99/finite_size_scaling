@@ -7,7 +7,7 @@ using CSV, DataFrames
 using LaTeXStrings
 using ForwardDiff 
 
-a_s = 220
+a_s = 463
 
 K_vals = vec(Matrix(CSV.read("data2/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals = vec(Matrix(CSV.read("data2/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
@@ -111,7 +111,7 @@ function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100
 
         # Ensure positivity (log will be used downstream)
         p2_syn = max.(p2_syn, eps())
-        _, shifts_syn, _, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
+        _, shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
         all_shifts[m, :] .= shifts_syn
     end
 
