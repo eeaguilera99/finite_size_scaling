@@ -32,10 +32,14 @@ t_transient = 28
 
 
 # Perform collapse
-#res1, shifts1, shifts1err, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, 
-#p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)
-res2, shifts2, shifts2err, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, nc_mat_avg, 
+#=res1, shifts1, shifts1err, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, 
+p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)
+shifts1err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
+p2_err_mat; d=dim1, nbins=30, nmc=1000)[2]=#
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, nc_mat_avg, 
 nc_err_mat; d=dim2, n_kicks_i=t_transient, n_kicks_f=0)
+shifts2err = shifts_parametric_mc(K_vals, t_vals, nc_mat_avg, 
+nc_err_mat; d=dim2, nbins=30, nmc=1000)[2]
 
 #=
 # plots for ⟨p²⟩

@@ -66,10 +66,14 @@ dim2 = 3   # spatial dimension
 # Perform collapse
 t_transient = 18
 avg = true
-_, shifts1, shifts1err, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
+_, shifts1, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
 p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)
-_, shifts2, shifts2err, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=4), 
+shifts1err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
+p2_err_mat; d=dim1, nbins=30, nmc=1000)[2]
+_, shifts2, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=4), 
 nc_err_mat; d=dim2, n_kicks_i=t_transient, n_kicks_f=0)
+shifts2err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=4), 
+nc_err_mat; d=dim2, nbins=30, nmc=1000)[2]
 
 # ===== Example usage =====
 xi1 = exp.(shifts1)

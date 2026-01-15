@@ -89,25 +89,6 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     res = optimize(constrained_cost, a0, NelderMead())
     shifts = vcat(0.0, Optim.minimizer(res))
     a_free_opt = Optim.minimizer(res)
-    
-    #compute erros for shifts
-    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
-        H = ForwardDiff.hessian(constrained_cost, a_free_opt)
-        # Regularize if needed
-        H = Symmetric(H)
-        # Invert Hessian; if ill-conditioned, use pinv
-        Hinv = try
-            inv(H)
-        catch
-            pinv(H)
-        end
-        # 1σ from curvature (up to a global scale factor if objective not true χ²)
-        errs_free = sqrt.(diag(Hinv))
-        return errs_free, H, Hinv
-    end
-
-    errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
-    shiftserr = vcat(0.0, errs_free)
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
@@ -116,7 +97,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return res, shifts, shiftserr, X, Y, Yerr, sX_rel
+    return res, shifts, X, Y, Yerr, sX_rel
 end
 
 function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100, nmc=500, rng=MersenneTwister(0))

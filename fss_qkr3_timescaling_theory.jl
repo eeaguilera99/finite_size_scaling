@@ -169,25 +169,6 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     shifts = vcat(0.0, Optim.minimizer(res))
     a_free_opt = Optim.minimizer(res)
     
-    #compute erros for shifts
-    function shifts_hessian_errors(a_free_opt::AbstractVector, constrained_cost)
-        H = ForwardDiff.hessian(constrained_cost, a_free_opt)
-        # Regularize if needed
-        H = Symmetric(H)
-        # Invert Hessian; if ill-conditioned, use pinv
-        Hinv = try
-            inv(H)
-        catch
-            pinv(H)
-        end
-        # 1σ from curvature (up to a global scale factor if objective not true χ²)
-        errs_free = sqrt.(abs.(diag(Hinv)))
-        return errs_free, H, Hinv
-    end
-
-    errs_free, H, Hinv = shifts_hessian_errors(a_free_opt, constrained_cost)
-    shiftserr = vcat(0.0, errs_free)
-    
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
@@ -196,7 +177,27 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return res, shifts, shiftserr, X, Y, Yerr, sX_rel
+    return res, shifts, X, Y, Yerr, sX_rel
+end
+
+function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100, nmc=500, rng=MersenneTwister(0))
+    M, N = size(p2_mat)
+    all_shifts = zeros(nmc, M)
+
+    for m in 1:nmc
+        # Sample synthetic dataset
+        noise = rand!(rng, Normal(), similar(p2_mat)) .* p2_err_mat
+        p2_syn = p2_mat .+ noise
+
+        # Ensure positivity (log will be used downstream)
+        p2_syn = max.(p2_syn, eps())
+        _, shifts_syn, _, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
+        all_shifts[m, :] .= shifts_syn
+    end
+
+    mean_shifts = vec(mean(all_shifts, dims=1))
+    std_shifts  = vec(std(all_shifts, dims=1))
+    return mean_shifts, std_shifts, all_shifts
 end
 
 function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
