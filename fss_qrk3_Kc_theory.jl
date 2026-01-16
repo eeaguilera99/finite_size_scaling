@@ -65,11 +65,11 @@ dim2 = 3   # spatial dimension
 
 
 # Perform collapse
-t_transient = 18
+t_transient = 3
 avg = true
-amp = 4
-K_guess_index = 0 # index offset for initial Kc guess
-fit_k_filter = 1 # number of low-K points to exclude from fit
+amp = 2
+K_guess_index = 1 # index offset for initial Kc guess
+fit_k_filter = 0 # number of low-K points to exclude from fit
 
 #=_, shifts1, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp), 
 p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)

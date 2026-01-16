@@ -1,5 +1,5 @@
 using LinearAlgebra
-using Statistics
+using Statistics, Random, Distributions
 using Optim
 using Plots
 using LsqFit
@@ -7,7 +7,7 @@ using CSV, DataFrames
 using LaTeXStrings
 using ForwardDiff
 
-a_s = 220
+a_s = 1038
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
 p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_$(a_s).csv", DataFrame; header=false))

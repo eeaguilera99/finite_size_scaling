@@ -6,14 +6,14 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2, exclude_tol_frac=0.02)
-
-    #filter points for fit    
-    if n_k_filter != 1    
-            xi = xi[n_k_filter:end]
-            xierr = xierr[n_k_filter:end]
-            K_vals = K_vals[n_k_filter:end]
-    end
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclude_tol_frac=0.02)
+        #filter points for fit    
+        if n_k_filter != 0
+                n_k_filter += 1  # account for Julia 1-based indexing    
+                xi = xi[n_k_filter:end]
+                xierr = xierr[n_k_filter:end]
+                K_vals = K_vals[n_k_filter:end]
+        end
 
     u = (1)./xi
     uerr = u.^2 .*xierr
@@ -25,7 +25,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=2, exclude_tol_frac=
     β₀₀ = minimum(u)*0.5
     A₀  = maximum(u)
     ν₀  = 1
-    Kc₀ = K_vals[argmin(u)]  # where ξ is largest
+    Kc₀ = K_vals[argmin(u) + K_val_g]  # where ξ is largest
     println(Kc₀)
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
@@ -61,7 +61,9 @@ end
 
 
 dim = 3 # spatial dimension
-#K_vals, p2_mat, p2_err_mat = filter_K(K_vals, p2_mat, p2_err_mat; n_kkicks_i=2, n_kkicks_f=0)
+K_guess_index = 0 # index offset for initial Kc guess
+fit_k_filter = 0 # number of low-K points to exclude from fit
+
 
 # Perform collapse
 _, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
@@ -70,7 +72,7 @@ shiftserr = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbin
 
 xi = exp.(shifts)
 xierr = (xi.*shiftserr)  #error propagation
-results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1)#exclude frist point from fit
+results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=fit_k_filter, K_val_g=K_guess_index) #exclude frist point from fit
 
 #=
 # Plot raw data
