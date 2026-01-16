@@ -6,9 +6,10 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 
 Returns best-fit parameters + standard errors from covariance matrix.
 """
-function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1, exclude_tol_frac=0.02)
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclude_tol_frac=0.02)
         #filter points for fit    
-        if n_k_filter != 1    
+        if n_k_filter != 0
+                n_k_filter += 1  # account for Julia 1-based indexing    
                 xi = xi[n_k_filter:end]
                 xierr = xierr[n_k_filter:end]
                 K_vals = K_vals[n_k_filter:end]
@@ -24,7 +25,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=1, exclude_tol_frac=
         β₀₀ = minimum(u)*0.5
         A₀  = maximum(u)
         ν₀  = 1
-        Kc₀ = K_vals[argmin(u)+1]  # where ξ is largest
+        Kc₀ = K_vals[argmin(u) + K_val_g]  # where ξ is largest
         p0 = [β₀₀, A₀, ν₀, Kc₀]
 
         # Mask out values too close to trial Kc₀
@@ -66,22 +67,26 @@ dim2 = 3   # spatial dimension
 # Perform collapse
 t_transient = 18
 avg = true
-_, shifts1, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
+amp = 4
+K_guess_index = 0 # index offset for initial Kc guess
+fit_k_filter = 1 # number of low-K points to exclude from fit
+
+#=_, shifts1, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp), 
 p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)
-shifts1err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=4), 
-p2_err_mat; d=dim1, nbins=30, nmc=1000)[2]
-_, shifts2, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=4), 
+shifts1err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp), 
+p2_err_mat; d=dim1, nbins=30, nmc=1000)[2]=#
+_, shifts2, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=amp), 
 nc_err_mat; d=dim2, n_kicks_i=t_transient, n_kicks_f=0)
-shifts2err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=4), 
+shifts2err = shifts_parametric_mc(K_vals, t_vals, apply_mov_av_matrix(nc_mat, p=avg, loc_amp=amp), 
 nc_err_mat; d=dim2, nbins=30, nmc=1000)[2]
 
 # ===== Example usage =====
-xi1 = exp.(shifts1)
-xi1err = xi1.*shifts1err
+#=xi1 = exp.(shifts1)
+xi1err = xi1.*shifts1err=#
 xi2 = exp.(shifts2)
 xi2err = xi2.*shifts2err
-results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err; n_k_filter=2)
-results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err; n_k_filter=2)
+#results1 = fit_xi_offset_LsqFit(K_vals, xi1, xi1err; n_k_filter=fit_k_filter)
+results2 = fit_xi_offset_LsqFit(K_vals, xi2, xi2err; n_k_filter=fit_k_filter, K_val_g=K_guess_index)
 #=
 # Plot raw data
 plt_raw1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
@@ -94,16 +99,16 @@ bottom_margin=5Plots.mm, left_margin=5Plots.mm))=#
 # Plot fit
 Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 
-plt_fit1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
+#=plt_fit1 = plot(K_vals, xi1, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
                 title=latexstring("\$E_k\$, \$κ_c≈ $(round(results1.Kc,digits=3))\$, \$d=$(dim1)\$"),
                 label="data")
 ξfit1 = (1)./(results1.β0 .+ results1.A .* abs.(Kgrid .- results1.Kc).^(abs(results1.ν)))
 plot!(plt_fit1, Kgrid, ξfit1, lw=2,
         label="fit (ν ≈ $(round(abs(results1.ν),digits=3)))")
-vline!(plt_fit1, [results1.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+vline!(plt_fit1, [results1.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")=#
 
-plt_fit2 = plot(K_vals, xi2, seriestype=:scatter, ms=6,
+plt_fit2 = plot(K_vals, xi2, yerror=xi2err, seriestype=:scatter, ms=6,
                 xlabel=L"κ", ylabel=L"ξ(κ)",
                 title=latexstring("\$a_s=$(a_s)a_0\$, \$κ_c≈ $(round(results2.Kc,digits=3))\$, \$d=$(dim2)\$"),#\$1/n_c^2\$ \$a_s=$(a_s)a_0\$
                 label="data")
