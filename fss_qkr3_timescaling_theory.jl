@@ -1,13 +1,13 @@
 using LinearAlgebra
 using Statistics, Random, Distributions
-using Optim
 using Plots
-using LsqFit
+using Optim, LsqFit
 using CSV, DataFrames
 using LaTeXStrings
 using ForwardDiff
+using FFTW
 
-a_s = 1038
+a_s = 220
 K_vals = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
 p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_$(a_s).csv", DataFrame; header=false))
@@ -22,7 +22,7 @@ function revert_scale(time_vals, p2_vals, nc2_vals, d1, d2)
     t_vals = exp.(time_vals .* -d1)
     p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
     nc_mat = exp.(nc2_vals) .* (t_vals .^ (2/d2))
-    return t_vals, p2_mat', nc_mat'
+    return t_vals, Matrix(p2_mat'), Matrix(nc_mat')
 end
 dim1 = 5
 dim2 = 3
@@ -78,6 +78,36 @@ function apply_mov_av_matrix(M; p=true, loc_amp=2)
     return M_avg
 end
 
+#FFT for filtering
+function lowpass_fft(y::Vector, cutoff_ratio::Float64)
+    N = length(y)
+    Y = fft(y)
+
+    # Cutoff index in frequency domain
+    cutoff = floor(Int, cutoff_ratio * N ÷ 2)
+
+    # Zero high frequencies (keep 2*cutoff for symmetry)
+    Y[cutoff+2:end-cutoff] .= 0
+
+    # Inverse transform to get smoothed signal
+    y_smooth = real(ifft(Y))
+    return abs.(y_smooth)
+end
+
+# Apply lowpass FFT to each row of a matrix
+function apply_lowpass_fft_matrix(M::Matrix, cutoff_ratio::Float64; p=true)
+    if p != true
+        return M
+    else
+        M_smooth = similar(M)
+        for i in axes(M,1)
+            M_smooth[i,:] = lowpass_fft(M[i,:], cutoff_ratio)
+        end
+        return M_smooth
+    end
+end
+
+
 # compute correlations between avg signals
 function trend_rep_avg(mat, mat_avg)
     if size(mat,1) == size(mat_avg,1)
@@ -123,7 +153,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d, n
     Λ_err = p2_err_mat ./ (t_vals' .^ (2/d))
 
     # Log variables
-    X = -log.(t_vals' .^ (1/d))     # 1×N
+    X = -log.(t_vals' .^ (1/d))   # 1×N
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
     Yerr = Λ_err ./ Λ

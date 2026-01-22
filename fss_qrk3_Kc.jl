@@ -61,12 +61,12 @@ end
 
 
 dim = 3 # spatial dimension
-K_guess_index = 0 # index offset for initial Kc guess
+K_guess_index = 1 # index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
 
 
 # Perform collapse
-_, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
+_, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 shiftserr = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)[2]
 # ===== Example usage =====
 
@@ -101,7 +101,16 @@ println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
 println("A   ≈ $(results.A)   ± $(results.err_A)")
 println("β_0  ≈ $(results.β0)  ± $(results.err_β0)")
 println("χ²  = $(results.χ2),  χ²_red = $(results.χ2_red)")
-#=
-#save data
+
+#=#save data
 d1 = DataFrame(xi', :auto)
-CSV.write("ξ(k)_data_220.csv", d1)=#
+CSV.write("ξ(k)_data_220.csv", d1)
+
+d2 = DataFrame(ξfit', :auto)
+CSV.write("ξ(k)_data_fit_220.csv", d2)
+
+d3 = DataFrame(Kgrid', :auto)
+CSV.write("Kvals_ξfit_220.csv", d3)
+
+d4 = DataFrame(xierr', :auto)
+CSV.write("ξerr(k)_data_220.csv", d4)=#
