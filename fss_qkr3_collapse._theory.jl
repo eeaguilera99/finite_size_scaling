@@ -23,17 +23,17 @@ dim2 = 3  # spatial dimension
 #Perform adaptive moving avg
 avg = true
 amp = 4
-p2_mat_avg = apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp)
+#p2_mat_avg = apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp)
 #corr_p2 = trend_rep_avg(p2_mat, p2_mat_avg)
-nc_mat_avg = apply_mov_av_matrix(nc_mat, p=avg, loc_amp=amp)
+#nc_mat_avg = apply_mov_av_matrix(nc_mat, p=avg, loc_amp=amp)
 #corr_nc = trend_rep_avg(nc_mat, nc_mat_avg)
 
 #Perform FFT smoothing
 """freq cutoff defines a ratio of lowfreq to retain, smaller ratio means more smoothing"""
 avg = true
-smooth_factor = 0.2
-#p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
-#nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
+smooth_factor = 0.1
+p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
+nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
 
 #transcient
 t_transient = 28
@@ -67,7 +67,7 @@ display(plot(plt1, plt2, suptitle=latexstring("Raw data  \$d=$(dim1)\$, \$a_s=$(
 bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 
 
-#=#collapse plot
+#collapse plot
 #gr()
 plt3 = plot(title=latexstring("\$E_k\$, \$d=$(dim1)\$"),
     xlabel=L"ln$(ξ/N^{1/d})$", ylabel=L"$ln(Λ)$")
@@ -83,7 +83,7 @@ end
 #display(plt4)
 
 display(plot(plt3, plt4, suptitle=latexstring("Collapse, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
-bottom_margin=5Plots.mm, left_margin=5Plots.mm))=#
+bottom_margin=5Plots.mm, left_margin=5Plots.mm))
 
 #savefig(plt4, "fss_collapsed_data_nc2_d$(dim).png")
 

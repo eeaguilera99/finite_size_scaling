@@ -13,7 +13,7 @@ Implements the Lemarié finite-time-scaling method:
 
 Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 """
-function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=1, n_kicks_f=0)
+function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=2, n_kicks_f=0)
 
     
     #filter Nkicks range
@@ -47,9 +47,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
     end
     X = Kfit .- Kc
     Kfit_interval = indexin(Kfit, K_vals)
-    # allocate chi2 storage per time and compute per-time linear fits
-    chi2_per_time = zeros(length(t_vals))
-    redchi2_per_time = zeros(length(t_vals))
+
     for (j,t) in enumerate(t_vals)
         y = lnΛ[mask_global, j]
         # linear regression y = a + b*X
@@ -64,18 +62,6 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         s_errs[j] = sqrt(cov[2,2])
         fit_lines[j] = (coeffs[1], coeffs[2])
 
-        # chi-square for this linear fit using lnΛ measurement errors (guard zeros)
-        σ_y = copy(ln_Λ_err[mask_global, j])
-        pos = σ_y .> 0
-        if any(pos)
-            σ_y[.!pos] .= maximum(σ_y[pos]) + eps()
-        else
-            σ_y .= maximum(abs.(y)) + eps()
-        end
-        chi2_j = sum(((y .- yfit) ./ σ_y).^2)
-        dof_j = length(y) - 2
-        chi2_per_time[j] = chi2_j
-        redchi2_per_time[j] = chi2_j / max(dof_j, 1)
     end
 
     # 3️⃣ log–log fit of |s(t)| vs ln t (weighted)
@@ -104,6 +90,12 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
     ν_err = (1.0 / (dim * slope^2)) * slope_err
 
     intercept = coeff[1]
+
+    # goodness of fit for the ln|s| vs ln t weighted fit
+    resid_logs = logs .- logs_fit
+    chi2 = sum((resid_logs ./ logs_err_safe).^2)
+    dof = length(logs) - 2
+    reduced_chi2 = chi2 / max(dof, 1)
 
     # 4️⃣ Plots
     if plotshow
@@ -140,18 +132,17 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; Kc,
         #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
 
-        return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
+    return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
             s_vals=s_vals, s_errs=s_errs,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines,
-            chi2_loglog=chi2, redchi2_loglog=reduced_chi2,
-            chi2_per_time=chi2_per_time, redchi2_per_time=redchi2_per_time)
+            chi2_loglog=chi2, redchi2_loglog=reduced_chi2)
 end
 
-Kc = 0.926
-dim = 3
+Kc = 0.794
+dim = 4
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=2, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 1, n_kicks_i=2, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")

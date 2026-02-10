@@ -7,7 +7,7 @@ using CSV, DataFrames
 using LaTeXStrings
 using ForwardDiff 
 
-a_s = 220
+a_s = 775
 
 K_vals = vec(Matrix(CSV.read("data2/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals = vec(Matrix(CSV.read("data2/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times

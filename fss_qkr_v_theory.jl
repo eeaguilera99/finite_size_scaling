@@ -158,8 +158,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim, a_s
         return (ν=ν, err_ν=ν_err, slope=slope, slope_err=slope_err, intercept=intercept,
             s_vals=s_vals, s_errs=s_errs,
             lnΛc_vals=lnΛc_vals, fit_lines=fit_lines,
-            chi2_loglog=chi2, redchi2_loglog=reduced_chi2,
-            chi2_per_time=chi2_per_time, redchi2_per_time=redchi2_per_time)
+            chi2_loglog=chi2, redchi2_loglog=reduced_chi2)
 end
 
 Kc_nc = 1.291
