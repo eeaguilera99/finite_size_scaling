@@ -5,17 +5,111 @@ using Plots
 using LsqFit
 using CSV, DataFrames
 using LaTeXStrings
-using ForwardDiff 
+using ForwardDiff
+using FFTW 
 
+#Load data
+type = "EX" #Ex for experimental, MF for theory
 a_s = 775
 
-K_vals = vec(Matrix(CSV.read("data2/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data2/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data2/$(a_s)/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-p2_err_mat = Matrix(CSV.read("data2/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+K_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
+t_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
+p2_mat = Matrix(CSV.read("data$(type)/$(a_s)/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
+if type == "EX"
+    p2_err_mat = Matrix(CSV.read("data$(type)/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+end
+if type == "MF"
+    nc_mat = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_$(a_s).csv", DataFrame; header=false))              # ⟨p²⟩ values
+    p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
+    nc_err_mat = 0.01 .* nc_mat 
+    function revert_scale(time_vals, p2_vals, nc2_vals, d1, d2)
+        t_vals = exp.(time_vals .* -d1)
+        p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
+        nc_mat = exp.(nc2_vals) .* (t_vals .^ (2/d2))
+        return t_vals, Matrix(p2_mat'), Matrix(nc_mat')
+    end 
+    dim1 = 5
+    dim2 = 3
+    t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
+end
 
+#functon to apply moving average smoothing
+function adaptive_moving_average(y; p=true, loc_amp=2, min_win=3, max_win=15, ε=1e-12)
+    #p parameter input to enable/disable smoothing
+    if p ==true
+        N = length(y)
+        smooth = similar(y)
 
+        # robust scale: avoid global outlier domination
+        global_scale = max(maximum(abs.(y)), ε)#prevent one big spike from dominating the amplitude scaling
 
+        for i in 1:N
+            # small probe window to estimate local amplitude (safe clamp)
+            probe = max(1, i-loc_amp) : min(N, i+loc_amp)
+            local_amp = maximum(y[probe]) - minimum(y[probe])
+
+            # map local amplitude to window size (inverted: larger amp -> smaller window)
+            frac = clamp(local_amp / global_scale, 0.0, 1.0)
+            scaled_win = round(Int, max_win - frac * (max_win - min_win))
+
+            # enforce bounds and oddness
+            scaled_win = clamp(scaled_win, min_win, max_win)
+            actual_win = isodd(scaled_win) ? scaled_win : scaled_win + 1
+            actual_win = min(actual_win, max_win)              # ensure not exceed max
+
+            hw = actual_win ÷ 2
+            win_start = max(1, i - hw)
+            win_stop  = min(N, i + hw)
+            win = win_start:win_stop
+
+            smooth[i] = mean(view(y, win))#computes the avg
+        end
+
+        return smooth
+    else
+        return y
+    end
+end
+
+# Apply moving average to each row of a matrix
+function apply_mov_av_matrix(M; p=true, loc_amp=2)
+    M_avg = similar(M)
+    for i in axes(M,1)
+        M_avg[i,:] = adaptive_moving_average(M[i,:]; p=p, loc_amp=loc_amp, min_win=3, max_win=15)
+    end
+    return M_avg
+end
+
+#FFT for filtering
+function lowpass_fft(y::Vector, cutoff_ratio::Float64)
+    N = length(y)
+    Y = fft(y)
+
+    # Cutoff index in frequency domain
+    cutoff = floor(Int, cutoff_ratio * N ÷ 2)
+
+    # Zero high frequencies (keep 2*cutoff for symmetry)
+    Y[cutoff+2:end-cutoff] .= 0
+
+    # Inverse transform to get smoothed signal
+    y_smooth = real(ifft(Y))
+    return abs.(y_smooth)
+end
+
+# Apply lowpass FFT to each row of a matrix
+function apply_lowpass_fft_matrix(M::Matrix, cutoff_ratio::Float64; p=true)
+    if p != true
+        return M
+    else
+        M_smooth = similar(M)
+        for i in axes(M,1)
+            M_smooth[i,:] = lowpass_fft(M[i,:], cutoff_ratio)
+        end
+        return M_smooth
+    end
+end
+
+# Functions to exclude early/late time points (Nkicks) or Kkicks from analysis
 function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
     n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
     t_vals = t_vals[n_kicks_i:n_Nkicks_f]
@@ -32,6 +126,7 @@ function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
     return Kk_vals, mat, err_mat
 end
 
+#Main function for finite time scaling analysis
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3, n_kicks_i=1, n_kicks_f=0)
     
     #filter Nkicks range
@@ -100,6 +195,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     return res, shifts, X, Y, Yerr, sX_rel
 end
 
+# Function to perform parametric bootstrap for shift uncertainties
 function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100, nmc=500, rng=MersenneTwister(0))
     M, N = size(p2_mat)
     all_shifts = zeros(nmc, M)
@@ -120,7 +216,8 @@ function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100
     return mean_shifts, std_shifts, all_shifts
 end
 
-function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)# calculates rel var for arbitrary shifts
+# calculates rel var for arbitrary shifts
+function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)
     Xp = vec(X .+ a_full .* ones(1,size(X,2)))
     
     # Flatten for binning
