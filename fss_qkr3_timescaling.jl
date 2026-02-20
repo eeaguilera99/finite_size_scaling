@@ -9,29 +9,29 @@ using ForwardDiff
 using FFTW 
 
 #Load data
-type = "EX" #Ex for experimental, MF for theory
-a_s = 775
+function Import_data(type, a_s)
+    K_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
+    t_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
+    p2_mat = Matrix(CSV.read("data$(type)/$(a_s)/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
+    if type == "EX"
+        p2_err_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     # Errors
+    end
+    if type == "MF"
+        nc_mat = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_$(a_s).csv", DataFrame; header=false))              # ⟨p²⟩ values
+        p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
+        nc_err_mat = 0.01 .* nc_mat 
+        function revert_scale(time_vals, p2_vals, nc2_vals, d1, d2)
+            t_vals = exp.(time_vals .* -d1)
+            p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
+            nc_mat = exp.(nc2_vals) .* (t_vals .^ (2/d2))
+            return t_vals, Matrix(p2_mat'), Matrix(nc_mat')
+        end 
+        dim1 = 5
+        dim2 = 3
+        t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
+    end
+end
 
-K_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
-t_vals = vec(Matrix(CSV.read("data$(type)/$(a_s)/number_of_kicks.csv", DataFrame; header=false)))  # Times
-p2_mat = Matrix(CSV.read("data$(type)/$(a_s)/nc_matrix.csv", DataFrame; header=false))             # ⟨p²⟩ values
-if type == "EX"
-    p2_err_mat = Matrix(CSV.read("data$(type)/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     # Errors
-end
-if type == "MF"
-    nc_mat = Matrix(CSV.read("dataMF/d=3_scaled_nc_2_$(a_s).csv", DataFrame; header=false))              # ⟨p²⟩ values
-    p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
-    nc_err_mat = 0.01 .* nc_mat 
-    function revert_scale(time_vals, p2_vals, nc2_vals, d1, d2)
-        t_vals = exp.(time_vals .* -d1)
-        p2_mat = exp.(p2_vals) .* (t_vals .^ (2/d2))
-        nc_mat = exp.(nc2_vals) .* (t_vals .^ (2/d2))
-        return t_vals, Matrix(p2_mat'), Matrix(nc_mat')
-    end 
-    dim1 = 5
-    dim2 = 3
-    t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
-end
 
 #functon to apply moving average smoothing
 function adaptive_moving_average(y; p=true, loc_amp=2, min_win=3, max_win=15, ε=1e-12)
