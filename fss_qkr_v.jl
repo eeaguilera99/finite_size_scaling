@@ -142,7 +142,7 @@ Kc = 0.794
 dim = 4
 
 res = finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 1, n_kicks_i=2, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=2, n_kicks_f=0)
 
 println("\n===== Linear finite-time-scaling results =====")
 println("ν  = $(round(res.ν,digits=4)) ± $(round(res.err_ν,digits=4))")

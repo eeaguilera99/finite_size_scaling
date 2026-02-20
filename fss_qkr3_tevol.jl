@@ -10,11 +10,11 @@ Plot kinetic energy as function of time at criticality for exponent of difussion
 t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=2, n_kicks_f=0)
 
 dim = 3
-res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
 
 
 xi1 = exp.(shifts1)
-K_c1_i = 10#argmax(xi1)+1
+K_c1_i = argmax(xi1)
 
 #Plot straight lines 
 model(t, p) = p[1] .* t .+ p[2]  # y = m*x + b
