@@ -38,7 +38,7 @@ smooth_factor = 0.1
 p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
 nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
 
-function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=3, raw=false, d1=3, d2=3, transient=5, avg=true, amp=4)
+function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=3, raw=false, d1=3, d2=3, transient=5)
     if q == 1
         res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, p2_err_mat; d=d1, n_kicks_i=transient, n_kicks_f=0)
         if raw == true
@@ -49,7 +49,7 @@ function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat
             end
             display(plt1)
         end
-        plt3 = plot(title=latexstring("\$E_k\$, \$d=$(dim1)\$"),
+        plt3 = plot(title=latexstring("\$E_k\$, \$d=$(d1)\$"),
             xlabel=L"ln$(ξ/N^{1/d})$", ylabel=L"$ln(Λ)$")
         for (i,K) in enumerate(K_vals)
             plot!(plt3, X1[:] .+ shifts1[i], Y1[i,:], marker=:o, label="")
@@ -66,7 +66,7 @@ function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat
             end
             display(plt2)
         end
-        plt4 = plot(title=latexstring("\$1/n_c^2\$ \$d=$(dim2)\$"),# Collapse, \$a_s=$(a_s)a_0\$ 
+        plt4 = plot(title=latexstring("\$1/n_c^2\$ \$d=$(d2)\$"),# Collapse, \$a_s=$(a_s)a_0\$ 
             xlabel=L"ln$(ξ/N^{1/d})$", ylabel=L"ln$(Λ)$")
         for (i,K) in enumerate(K_vals)
             plot!(plt4, X2[:] .+ shifts2[i], Y2[i,:], marker=:o, label="")
@@ -87,16 +87,16 @@ function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat
             for (i,K) in enumerate(K_vals)
                 plot!(plt2, X2[:], Y2[i,:], marker=:o, label="")#, yerror=Yerr[i,:]κ="*string(round(K, digits=3))
             end
-            display(plot(plt1, plt2, suptitle=latexstring("Raw data  \$d=$(dim1)\$, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
+            display(plot(plt1, plt2, suptitle=latexstring("Raw data  \$d=$(d1)\$, \$a_s=$(a_s)a_0\$"), layout=(1,2), size=(1000,400), 
             bottom_margin=5Plots.mm, left_margin=5Plots.mm))
         end
-        plt3 = plot(title=latexstring("\$E_k\$, \$d=$(dim1)\$"),
+        plt3 = plot(title=latexstring("\$E_k\$, \$d=$(d1)\$"),
             xlabel=L"ln$(ξ/N^{1/d})$", ylabel=L"$ln(Λ)$")
         for (i,K) in enumerate(K_vals)
             plot!(plt3, X1[:] .+ shifts1[i], Y1[i,:], marker=:o, label="")
         end
 
-        plt4 = plot(title=latexstring("\$1/n_c^2\$ \$d=$(dim2)\$"),# Collapse, \$a_s=$(a_s)a_0\$ 
+        plt4 = plot(title=latexstring("\$1/n_c^2\$ \$d=$(d2)\$"),# Collapse, \$a_s=$(a_s)a_0\$ 
             xlabel=L"ln$(ξ/N^{1/d})$", ylabel=L"ln$(Λ)$")
         for (i,K) in enumerate(K_vals)
             plot!(plt4, X2[:] .+ shifts2[i], Y2[i,:], marker=:o, label="")
@@ -110,7 +110,7 @@ end
 raw_data = true # set to true to plot raw data, false to only plot collapse
 type_data = 2 # 1 for p2, 2 for nc, 3 for both
 
-perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=type_data, raw=raw_data, d1=dim1, d2=dim2, transient=t_transient, avg=avg, amp=amp)
+perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=type_data, raw=raw_data, d1=dim1, d2=dim2, transient=t_transient)
 
 
 #=plt5 = plot(title="Correlations between original and avg data", xlabel="κ", ylabel="corr")
