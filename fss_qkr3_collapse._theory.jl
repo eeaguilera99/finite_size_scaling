@@ -21,8 +21,11 @@ dim1 = 3
 dim2 = 3  # spatial dimension
 
 
-#Perform adaptive moving avg
 avg = true
+t_transient = 28
+#Smothening 
+
+#Adaptive moving avg
 amp = 4
 #p2_mat_avg = apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp)
 #corr_p2 = trend_rep_avg(p2_mat, p2_mat_avg)
@@ -36,16 +39,11 @@ smooth_factor = 0.1
 p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
 nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
 
-#transcient
-t_transient = 28
-
-
 # Perform collapse
 res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, 
 p2_err_mat; d=dim1, n_kicks_i=t_transient, n_kicks_f=0)
 res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, nc_mat_avg, 
 nc_err_mat; d=dim2, n_kicks_i=t_transient, n_kicks_f=0)
-
 
 
 # plots for ⟨p²⟩

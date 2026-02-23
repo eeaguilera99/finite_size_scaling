@@ -1,4 +1,5 @@
-include("fss_qkr3_timescaling_theory.jl")  # for finite_time_scaling
+include("imp_data_theory.jl")
+include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 
 """
@@ -65,10 +66,10 @@ dim2 = 3   # spatial dimension
 
 
 # Perform collapse
-t_transient = 3
+t_transient = 28
 avg = true
 amp = 2
-K_guess_index = 1 # index offset for initial Kc guess
+K_guess_index = 0# index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
 
 #=_, shifts1, _, _, _, _ = finite_time_scaling(K_vals, t_vals, apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp), 
