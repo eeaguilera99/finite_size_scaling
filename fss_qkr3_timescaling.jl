@@ -215,29 +215,3 @@ function tot_variance(a_full::Vector, X::Matrix, Y::Matrix; nbins=100)
     return totvar, sX_rel
 end
 
-function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, data_type="", plot_label_b=false)
-    if plot_label_b == true
-        plot_label = "K="*string(round(K, digits=3))
-    else
-        plot_label = ""
-    end
-    if raw == true
-        plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-            xlabel="ln(t^(-1/d))", ylabel="ln(Λ)")
-        for (i,K) in enumerate(K_vals)
-            plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
-        end
-        display(plt1)
-        #savefig(plt1, "fss_raw_data_d$(dim).png")
-    end
-
-    # Plot after collapse
-    plt2 = plot(title=latexstring("Data collapse $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-        xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
-    for (i,K) in enumerate(K_vals)
-        plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
-    end
-    display(plt2)   
-    #savefig(plt2, "fss_collapsed_data_d$(dim).png")
-    println("Fit quality $(data_type): ", s_rel)
-end
