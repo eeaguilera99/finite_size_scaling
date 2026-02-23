@@ -1,5 +1,6 @@
+include("imp_data_ex.jl")
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
-
+include("fss_qrk3_timescaling_analysis.jl") 
 
 """
 Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
@@ -60,47 +61,11 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclud
 end
 
 
-dim = 4 # spatial dimension
+dim = 3 # spatial dimension
 K_guess_index = 1 # index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
 
-
-# Perform collapse
-_, shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2, n_kicks_f=0)
-shiftserr = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)[2]
-# ===== Example usage =====
-
-xi = exp.(shifts)
-xierr = (xi.*shiftserr)  #error propagation
-results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=fit_k_filter, K_val_g=K_guess_index) #exclude frist point from fit
-
-#=
-# Plot raw data
-plt_raw = plot(K_vals, (1)./xi, seriestype=:scatter, ms=6,
- xlabel="K", ylabel="ξ(K)", title="Raw ξ(K) data", label="data")
-display(plt_raw)=#
-
-# Plot fit
-Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
-plt_fit = plot(K_vals, xi, yerror=xierr, seriestype=:scatter, ms=6,
-    xlabel=L"κ", ylabel=L"ξ(κ)",
-    title=latexstring("\$ξ(κ)\$ \$a_s=$(a_s)a_0\$, \$κ_c\$≈$(round(results.Kc,digits=5))"),
-    label="data")
-
-ξfit = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
-plot!(plt_fit, Kgrid, ξfit, lw=2,
-    label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
-vline!(plt_fit, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
-display(plt_fit)
-       
-#println(results)
-
-println("\n===== Critical fit results with offset and error bars =====")
-println("κc  ≈ $(results.Kc)  ± $(results.err_Kc)")
-println("ν   ≈ $(results.ν)   ± $(results.err_ν)")
-println("A   ≈ $(results.A)   ± $(results.err_A)")
-println("β_0  ≈ $(results.β0)  ± $(results.err_β0)")
-println("χ²  = $(results.χ2),  χ²_red = $(results.χ2_red)")
+perform_Kc_anal(shifts, shiftserr, K_vals; data_type="Ex", d=dim, n_k_filter=fit_k_filter, K_guess_index=K_guess_index)
 
 #=#save data
 d1 = DataFrame(xi', :auto)
