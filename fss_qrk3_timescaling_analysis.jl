@@ -111,7 +111,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
     logs_err = s_errs ./ abs.(s_vals)   # σ(ln s) = σ_s / |s|
     A = hcat(ones(length(logt)), logt)
 
-# Weighted linear regression using weights = 1/σ²
+    # Weighted linear regression using weights = 1/σ²
     # guard logs_err zeros before building W
     logs_err_safe = copy(logs_err)
     posl = logs_err_safe .> 0
@@ -177,4 +177,34 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
     println("Goodness of the fit")
     println("χ2 loglog = $(round(chi2 ,digits=4))")
     println("χ2 log log red = $(round(reduced_chi2, digits=4))")
+end
+
+#Time evolution at criticality for dimension
+function perform_tevol(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_index=0, data_type="")
+
+    xi1 = exp.(shifts)
+    K_c1_i = argmax(xi1) + Kc_offset_index
+
+    #Plot straight lines 
+    model(t, p) = p[1] .* t .+ p[2]  # y = m*x + b
+    guess1 = [2/d, 0.0]  # Initial guess for [m, b]
+    fit1 = curve_fit(model, log.(t_vals), log.(data_mat[K_c1_i, :]), guess1)
+    fit_params1 = coef(fit1)
+    fit_errs1 = standard_errors(fit1)
+    α_err = fit_errs1[1]
+
+    #χ^2 goodness of fit
+    residuals1 = log.(data_mat[K_c1_i, :]) .- model(log.(t_vals), fit_params1)
+    χ2_1 = sum((residuals1 ./ (data_mat_err[K_c1_i, :]./data_mat[K_c1_i, :])).^2)
+    dof1 = length(t_vals) - length(fit_params1)
+    println("χ2 =", χ2_1)
+    println("χ2 rel =", χ2_1/dof1)
+
+    #Plot
+    plt1 = plot(title=latexstring("Time evolution of $(data_type) near \$κ_c\$"),
+        xlabel="Time (kicks)", ylabel=latexstring("$(data_type)"))
+    plot!(plt1, t_vals, data_mat[K_c1_i, :], xscale=:log10, yscale=:log10, marker=:o, label="K=$(round(K_vals[K_c1_i], digits=3))", ms=3)
+    plot!(plt1, t_vals, exp.(model(log.(t_vals),fit_params1)), xscale=:log10, yscale=:log10, label=latexstring("\$α≈$(round(fit_params1[1], digits=3)) ± $(round(α_err, digits=3))\$"))
+    display(plt1)
+    println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
 end

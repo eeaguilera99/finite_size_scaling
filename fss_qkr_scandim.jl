@@ -1,18 +1,19 @@
+include("imp_data_ex.jl")
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 #code to loop over dimension values for best collapse
 
 d_values = 1:0.1:7
 
-collapse_quality = Float64[]
-#shift_dict = Dict{Float64, Vector{Float64}}()
 
-for dim in d_values
-    l_res, l_shifts, l_X, l_Y, l_Y_err, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2)
-    push!(collapse_quality, sX)
-end
 
-function dim_scan(collapse_quality)
+function dim_scan(d_values)
+
+    collapse_quality = Float64[]
+    for dim in d_values
+        _, _, _, _, _, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2)
+        push!(collapse_quality, sX)
+    end
     best_idx = argmin(collapse_quality)
     best_d = d_values[best_idx]
     best_val = collapse_quality[best_idx]
@@ -23,7 +24,7 @@ function dim_scan(collapse_quality)
     println("   min_val = ", best_val)
 
     # Plot collapse quality vs dimension
-    #splotly()
+    #plotly()
     plt_quality = plot(d_values, collapse_quality, lw=1, marker=:o,
         xlabel="Dimension d", ylabel=L"\sigma^{rel}",
         title="Quality of scaling collapse vs dimension d", label="")
