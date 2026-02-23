@@ -21,3 +21,26 @@ dim2 = 3
 t_vals, p2_mat, nc_mat = revert_scale(t_vals_0, p2_mat_0, nc_mat_0, dim1, dim2)
 p2_err_mat = 0.01 .* p2_mat  # assume 1% error if no data
 nc_err_mat = 0.01 .* nc_mat 
+
+avg = true
+t_transient = 28
+#Smothening 
+
+#Adaptive moving avg
+amp = 4
+#p2_mat_avg = apply_mov_av_matrix(p2_mat, p=avg, loc_amp=amp)
+#corr_p2 = trend_rep_avg(p2_mat, p2_mat_avg)
+#nc_mat_avg = apply_mov_av_matrix(nc_mat, p=avg, loc_amp=amp)
+#corr_nc = trend_rep_avg(nc_mat, nc_mat_avg)
+
+#Perform FFT smoothing
+"""freq cutoff defines a ratio of lowfreq to retain, smaller ratio means more smoothing"""
+smooth_factor = 0.1
+p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
+nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
+
+#Scaling analysis
+d1 = 3
+d2 = 3 
+res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, p2_err_mat; d=d1, n_kicks_i=t_transient, n_kicks_f=0)
+res2, shifts2, X2, Y2, Yerr2, s_rel2 = finite_time_scaling(K_vals, t_vals, nc_mat_avg, nc_err_mat; d=d2, n_kicks_i=t_transient, n_kicks_f=0)
