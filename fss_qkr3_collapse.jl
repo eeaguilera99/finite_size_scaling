@@ -22,9 +22,32 @@ Perform finite-time scaling collapse of Anderson transition data.
 
 dim = 3 # spatial dimension
 
-# Perform collapse
-res, shifts, X, Y, Yerr, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=5, n_kicks_f=0)
 
+# Perform collapse
+function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim)
+    if raw == true
+        plt1 = plot(title=latexstring("Raw data \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
+            xlabel="ln(t^(-1/d))", ylabel="ln(Λ)")
+        for (i,K) in enumerate(K_vals)
+            plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label="K="*string(round(K, digits=3)))
+        end
+        display(plt1)
+        #savefig(plt1, "fss_raw_data_d$(dim).png")
+    end
+
+    # Plot after collapse
+    plt2 = plot(title=latexstring("Data collapse \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
+        xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
+    for (i,K) in enumerate(K_vals)
+        plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label="")
+    end
+    display(plt2)   
+    #savefig(plt2, "fss_collapsed_data_d$(dim).png")
+    println("Fit quality: ", s_rel)
+end
+
+perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data; raw=true, d=dim)
+#=
 # Plot before collapse
 plt1 = plot(title=latexstring("Raw data \$d=$(dim)\$, \$a_s=$(a_s)a_0\$"),
     xlabel="ln(t^(-1/d))", ylabel="ln(Λ)")
@@ -43,7 +66,7 @@ end
 display(plt2)
 #savefig(plt2, "fss_collapsed_data_d$(dim).png")
 
-println("Fit quality: ", s_rel)
+println("Fit quality: ", s_rel)=#
 #=
 #write csv file with scaling data
 df1 = DataFrame(Y, :auto)

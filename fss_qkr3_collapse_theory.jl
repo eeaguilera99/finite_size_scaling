@@ -38,6 +38,7 @@ smooth_factor = 0.1
 p2_mat_avg = apply_lowpass_fft_matrix(p2_mat, smooth_factor, p=avg)
 nc_mat_avg = apply_lowpass_fft_matrix(nc_mat, smooth_factor, p=avg)
 
+
 function perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=3, raw=false, d1=3, d2=3, transient=5)
     if q == 1
         res1, shifts1, X1, Y1, Yerr1, s_rel1 = finite_time_scaling(K_vals, t_vals, p2_mat_avg, p2_err_mat; d=d1, n_kicks_i=transient, n_kicks_f=0)
@@ -110,7 +111,7 @@ end
 raw_data = true # set to true to plot raw data, false to only plot collapse
 type_data = 2 # 1 for p2, 2 for nc, 3 for both
 
-perform_collapse(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=type_data, raw=raw_data, d1=dim1, d2=dim2, transient=t_transient)
+perform_collapse(K_vals, t_vals, p2_mat_avg, p2_err_mat, nc_mat_avg, nc_err_mat; q=type_data, raw=raw_data, d1=dim1, d2=dim2, transient=t_transient)
 
 
 #=plt5 = plot(title="Correlations between original and avg data", xlabel="κ", ylabel="corr")
