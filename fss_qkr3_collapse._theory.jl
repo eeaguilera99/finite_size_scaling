@@ -1,4 +1,5 @@
-include("fss_qkr3_timescaling_theory.jl")
+include("imp_data_theory.jl")
+include("fss_qkr3_timescaling.jl")
 
 """
     finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
