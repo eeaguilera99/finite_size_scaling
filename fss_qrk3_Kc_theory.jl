@@ -71,7 +71,29 @@ avg = true
 amp = 2
 K_guess_index = 0# index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
-type_data = 2 # 1 for kinetic energy, 2 for nc^2, 3 for both
+
+function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
+        xi = exp.(shifts)
+        xierr = xi.*shifts_err
+        results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
+        # Plot fit
+        Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
+        plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
+                        xlabel=L"κ", ylabel=L"ξ(κ)",
+                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                        label="data")
+        ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
+        plot!(plt_fit1, Kgrid, ξfit1, lw=2,
+                label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
+        vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+        display(plt_fit1)
+        println("\n===== Critical fit $(data_type) with offset and error bars =====")
+        println("κc1  ≈ $(results.Kc)  ± $(results.err_Kc)")
+        println("ν1   ≈ $(results.ν)   ± $(results.err_ν)")
+        println("A1   ≈ $(results.A)   ± $(results.err_A)")
+        println("β_01  ≈ $(results.β0)  ± $(results.err_β0)")
+        println("χ²1  = $(results.χ2),  χ²_red1 = $(results.χ2_red)")
+end
 
 function perform_Kc_analysis(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=2, d1=dim1, d2=dim2, transient=t_transient, avg=avg, amp=amp,
          K_guess_index=K_guess_index, fit_k_filter=fit_k_filter) 
@@ -180,8 +202,10 @@ function perform_Kc_analysis(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_
         end
 end
 
-perform_Kc_analysis(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=type_data, d1=dim1, d2=dim2, transient=t_transient, avg=avg, amp=amp,
-         K_guess_index=K_guess_index, fit_k_filter=fit_k_filter)
+#perform_Kc_analysis(K_vals, t_vals, p2_mat, p2_err_mat, nc_mat, nc_err_mat; q=type_data, d1=dim1, d2=dim2, transient=t_transient, avg=avg, amp=amp,
+#         K_guess_index=K_guess_index, fit_k_filter=fit_k_filter)
 
+perform_Kc_anal(shifts1, shifts1_err, K_vals; data_type="E_k", d=dim1, n_k_filter=fit_k_filter)
+perform_Kc_anal(shifts2, shifts2_err, K_vals; data_type="1/n_c^2", d=dim2, n_k_filter=fit_k_filter)
         
 
