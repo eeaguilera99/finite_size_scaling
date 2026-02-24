@@ -203,7 +203,7 @@ function perform_tevol(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_inde
     #Plot
     plt1 = plot(title=latexstring("Time evolution of $(data_type) near \$κ_c\$"),
         xlabel="Time (kicks)", ylabel=latexstring("$(data_type)"))
-    plot!(plt1, t_vals, data_mat[K_c1_i, :], xscale=:log10, yscale=:log10, marker=:o, label="K=$(round(K_vals[K_c1_i], digits=3))", ms=3)
+    plot!(plt1, t_vals, data_mat[K_c1_i, :], xscale=:log10, yscale=:log10, marker=:o, label="κ_c=$(round(K_vals[K_c1_i], digits=3))", ms=3)
     plot!(plt1, t_vals, exp.(model(log.(t_vals),fit_params1)), xscale=:log10, yscale=:log10, label=latexstring("\$α≈$(round(fit_params1[1], digits=3)) ± $(round(α_err, digits=3))\$"))
     display(plt1)
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
