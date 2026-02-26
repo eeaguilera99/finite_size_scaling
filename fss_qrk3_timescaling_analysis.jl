@@ -2,6 +2,7 @@
 using Plots
 using LaTeXStrings
 using LsqFit
+using Statistics
 
 #plotting function for raw and collapsed data
 function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, data_type="", plot_label_b=false)
@@ -31,21 +32,31 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, d
     println("Fit quality $(data_type): ", s_rel)
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; frac=0.2)
     # shift + convert
-    X_shifted = Float64.(X .+ shifts)
-    Kc_index = argmax(exp.(shifts))
-    Kc = K_vals[Kc_index]
+    X_shifted = vec(X .+ shifts)
+    Y_flat = vec(Y)
+    Y_err_flat = vec(Y_err)
+    #sort shifted X to find cutoff for loc/diff regions
+    X_sorted  = sort(X_shifted)
+
+    #define masks for loc/diff regions based on frac of data in X
+    n = length(X_sorted)
+    X_loc_max  = X_sorted[Int(frac*n)]
+    X_diff_min = X_sorted[Int((1-frac)*n)]
+    loc_mask  = X_shifted .<= X_loc_max
+    diff_mask = X_shifted .>= X_diff_min
+
 
     # diff side
-    Y_diff = vec(Float64.(Y[Kc_index:end, :]))
-    Y_diff_err = vec(Float64.(Y_err[Kc_index:end, :]))
-    X_diff = vec(X_shifted[Kc_index:end, :])
+    Y_diff = Y_flat[diff_mask]
+    Y_diff_err = Y_err_flat[diff_mask]
+    X_diff = X_shifted[diff_mask]
 
     # loc side
-    Y_loc = vec(Float64.(Y[1:Kc_index, :]))
-    Y_loc_err = vec(Float64.(Y_err[1:Kc_index, :]))
-    X_loc = vec(X_shifted[1:Kc_index, :])
+    Y_loc = Y_flat[loc_mask]    
+    Y_loc_err = Y_err_flat[loc_mask]
+    X_loc = X_shifted[loc_mask]
 
     # eliminate problematic points (NaN or zero error)
     mask_diff = .!(isnan.(Y_diff) .| isnan.(Y_diff_err) .| isnan.(X_diff))
@@ -87,7 +98,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
     dof_loc = length(Y_loc) - length(coef(fit_loc))
     χ2_red_loc = χ2_loc / max(dof_loc, 1)
     return (χ2_red_diff, χ2_red_loc)
-end    
+end   
 
 #critical Kc analysis from collapse shifts
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
