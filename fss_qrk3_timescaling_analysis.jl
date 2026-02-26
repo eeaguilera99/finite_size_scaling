@@ -85,6 +85,14 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; frac=0.2)
     guess_loc = Float64[2.0, 0.0]
     fit_loc = curve_fit(model, X_loc, Y_loc, guess_loc)
 
+    #plot
+    plt = plot(title="Collapse quality analysis")
+    scatter!(plt, X_diff, Y_diff, seriestype=:scatter, label="diff side")
+    plot!(plt, X_diff, model(X_diff, coef(fit_diff)), label="diff fit (slope ≈ $(round(coef(fit_diff)[1], digits=3)))")
+    scatter!(plt, X_loc, Y_loc, seriestype=:scatter, label="loc side")
+    plot!(plt, X_loc, model(X_loc, coef(fit_loc)), label="loc fit (slope ≈ $(round(coef(fit_loc)[1], digits=3)))")
+    display(plt)
+
     #goodness of fits
     resid_diff = Y_diff .- model(X_diff, coef(fit_diff))
     resid_loc = Y_loc .- model(X_loc, coef(fit_loc))
