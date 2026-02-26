@@ -1,5 +1,7 @@
+
 using Plots
 using LaTeXStrings
+using LsqFit
 
 #plotting function for raw and collapsed data
 function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, data_type="", plot_label_b=false)
@@ -28,6 +30,64 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, d
     #savefig(plt2, "fss_collapsed_data_d$(dim).png")
     println("Fit quality $(data_type): ", s_rel)
 end
+
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
+    # shift + convert
+    X_shifted = Float64.(X .+ shifts)
+    Kc_index = argmax(exp.(shifts))
+    Kc = K_vals[Kc_index]
+
+    # diff side
+    Y_diff = vec(Float64.(Y[Kc_index:end, :]))
+    Y_diff_err = vec(Float64.(Y_err[Kc_index:end, :]))
+    X_diff = vec(X_shifted[Kc_index:end, :])
+
+    # loc side
+    Y_loc = vec(Float64.(Y[1:Kc_index, :]))
+    Y_loc_err = vec(Float64.(Y_err[1:Kc_index, :]))
+    X_loc = vec(X_shifted[1:Kc_index, :])
+
+    # eliminate problematic points (NaN or zero error)
+    mask_diff = .!(isnan.(Y_diff) .| isnan.(Y_diff_err) .| isnan.(X_diff))
+    # also filter out zero uncertainties since they generate Inf weights
+    mask_diff .&= (Y_diff_err .> 0)
+    X_diff = X_diff[mask_diff];
+    Y_diff = Y_diff[mask_diff];
+    Y_diff_err = Y_diff_err[mask_diff];
+    if isempty(X_diff)
+        error("perform_collapse_quality: no valid data points for diff fit after filtering")
+    end
+
+    mask_loc = .!(isnan.(Y_loc) .| isnan.(Y_loc_err) .| isnan.(X_loc))
+    mask_loc .&= (Y_loc_err .> 0)
+    X_loc = X_loc[mask_loc];
+    Y_loc = Y_loc[mask_loc];
+    Y_loc_err = Y_loc_err[mask_loc];
+    if isempty(X_loc)
+        error("perform_collapse_quality: no valid data points for loc fit after filtering")
+    end
+
+    #fit
+    model(x, p) = p[1] .* x .+ p[2]
+    guess_diff = Float64[-(dim-2), 0.0] #guess for diff side
+    fit_diff = curve_fit(model, X_diff, Y_diff, guess_diff)
+    guess_loc = Float64[2.0, 0.0]
+    fit_loc = curve_fit(model, X_loc, Y_loc, guess_loc)
+
+    #goodness of fits
+    resid_diff = Y_diff .- model(X_diff, coef(fit_diff))
+    resid_loc = Y_loc .- model(X_loc, coef(fit_loc))
+    
+
+    χ2_diff = sum((resid_diff ./ Y_diff_err).^2)
+    dof_diff = length(Y_diff) - length(coef(fit_diff))
+    χ2_red_diff = χ2_diff / max(dof_diff, 1)
+
+    χ2_loc = sum((resid_loc ./ Y_loc_err).^2)
+    dof_loc = length(Y_loc) - length(coef(fit_loc))
+    χ2_red_loc = χ2_loc / max(dof_loc, 1)
+    return (χ2_red_diff, χ2_red_loc)
+end    
 
 #critical Kc analysis from collapse shifts
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
@@ -208,3 +268,4 @@ function perform_tevol(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_inde
     display(plt1)
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
 end
+
