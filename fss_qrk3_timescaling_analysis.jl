@@ -31,7 +31,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, d
     println("Fit quality $(data_type): ", s_rel)
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=false)
     # shift + convert
     X_shifted = Float64.(X .+ shifts)
     Kc_index = argmax(exp.(shifts))
@@ -74,6 +74,16 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
     guess_loc = Float64[2.0, 0.0]
     fit_loc = curve_fit(model, X_loc, Y_loc, guess_loc)
 
+    #plot
+    if plotshow == true
+        plt = plot(title="Fit quality of collapse", xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
+        scatter!(plt, X_diff, Y_diff, yerror=Y_diff_err, label="Diff side", marker=:o)
+        plot!(plt, X_diff, model(X_diff, coef(fit_diff)), lw=2, label="Diff fit")
+        scatter!(plt, X_loc, Y_loc, yerror=Y_loc_err, label="Loc side", marker=:o)
+        plot!(plt, X_loc, model(X_loc, coef(fit_loc)), lw=2, label="Loc fit")
+        display(plt)
+    end
+
     #goodness of fits
     resid_diff = Y_diff .- model(X_diff, coef(fit_diff))
     resid_loc = Y_loc .- model(X_loc, coef(fit_loc))
@@ -86,8 +96,19 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim)
     χ2_loc = sum((resid_loc ./ Y_loc_err).^2)
     dof_loc = length(Y_loc) - length(coef(fit_loc))
     χ2_red_loc = χ2_loc / max(dof_loc, 1)
-    return (χ2_red_diff, χ2_red_loc)
-end    
+
+    # slope errors
+    slope_diff = coef(fit_diff)[1]
+    slope_loc = coef(fit_loc)[1]
+    slope_diff_theory = -(dim - 2)
+    slope_loc_theory  = 2.0
+
+    err_diff = abs((slope_diff - slope_diff_theory))
+    err_loc  = abs((slope_loc  - slope_loc_theory))
+
+
+    return χ2_red_diff, err_diff, χ2_red_loc, err_loc
+end
 
 #critical Kc analysis from collapse shifts
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
