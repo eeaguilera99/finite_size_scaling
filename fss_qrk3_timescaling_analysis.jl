@@ -30,7 +30,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     #savefig(plt2, "fss_collapsed_data_d$(dim).png")
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s; plotshow=false)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; plotshow=false)
     # shift + convert
     X_shifted = Float64.(X .+ shifts)
     Kc_index = argmax(exp.(shifts))

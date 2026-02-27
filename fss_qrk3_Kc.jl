@@ -61,7 +61,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclud
 end
 
 
-K_guess_index = 0 # index offset for initial Kc guess
+K_guess_index = 1 # index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
 
 perform_Kc_anal(shifts_data, shiftserr_data, K_vals; data_type="Ex", d=dim, n_k_filter=fit_k_filter, K_guess_index=K_guess_index)
