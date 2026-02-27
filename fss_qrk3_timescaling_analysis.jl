@@ -69,7 +69,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s; plotshow=
 
     #fit
     model(x, p) = p[1] .* x .+ p[2]
-    guess_diff = Float64[-(dim-2), 0.0] #guess for diff side
+    guess_diff = Float64[-(d-2), 0.0] #guess for diff side
     fit_diff = curve_fit(model, X_diff, Y_diff, guess_diff)
     guess_loc = Float64[2.0, 0.0]
     fit_loc = curve_fit(model, X_loc, Y_loc, guess_loc)
