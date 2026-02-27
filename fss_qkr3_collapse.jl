@@ -20,10 +20,9 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 # Perform collapse
-#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data; data_type="Ex nc^-2", raw=true, d=dim)
-q_diff, q_err_diff, q_loc, q_err_loc = perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, dim; plotshow=true)
-println("Quality of collapse: q_diff = $q_diff, q_loc = $q_loc")
-println("Errors in quality (thoery): q_err_diff = $q_err_diff, q_err_loc = $q_err_loc")
+#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data; data_type="Ex nc^-2", raw=false, d=dim)
+perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, dim, a_s; plotshow=false)
+
 
 #=
 #write csv file with scaling data

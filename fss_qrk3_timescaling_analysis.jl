@@ -4,7 +4,7 @@ using LaTeXStrings
 using LsqFit
 
 #plotting function for raw and collapsed data
-function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, data_type="", plot_label_b=false)
+function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false)
     if plot_label_b == true
         plot_label = "K="*string(round(K, digits=3))
     else
@@ -28,10 +28,9 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts, s_rel; raw=false, d=dim, d
     end
     display(plt2)   
     #savefig(plt2, "fss_collapsed_data_d$(dim).png")
-    println("Fit quality $(data_type): ", s_rel)
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=false)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s; plotshow=false)
     # shift + convert
     X_shifted = Float64.(X .+ shifts)
     Kc_index = argmax(exp.(shifts))
@@ -77,7 +76,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=fal
 
     #plot
     if plotshow == true
-        plt = plot(title="Fit quality of collapse", xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
+        plt = plot(title=latexstring("Fit quality of collapse \$d=$(d)\$, \$a_s=$(a_s)a_0\$"), xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
         scatter!(plt, X_diff, Y_diff, yerror=Y_diff_err, label="Diff side", marker=:o)
         plot!(plt, X_diff, model(X_diff, coef(fit_diff)), lw=2, label="Diff fit")
         scatter!(plt, X_loc, Y_loc, yerror=Y_loc_err, label="Loc side", marker=:o)
@@ -89,7 +88,15 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=fal
     resid_diff = Y_diff .- model(X_diff, coef(fit_diff))
     resid_loc = Y_loc .- model(X_loc, coef(fit_loc))
     
+    #Rsquared metric
+    ss_tot_diff = sum((Y_diff .- mean(Y_diff)).^2)
+    ss_res_diff = sum(resid_diff.^2)
+    R2_diff = 1 - ss_res_diff / ss_tot_diff
+    ss_tot_loc = sum((Y_loc .- mean(Y_loc)).^2)
+    ss_res_loc = sum(resid_loc.^2)
+    R2_loc = 1 - ss_res_loc / ss_tot_loc
 
+    #Xi sqared metric
     χ2_diff = sum((resid_diff ./ Y_diff_err).^2)
     dof_diff = length(Y_diff) - length(coef(fit_diff))
     χ2_red_diff = χ2_diff / max(dof_diff, 1)
@@ -104,11 +111,16 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=fal
     slope_diff_theory = -(dim - 2)
     slope_loc_theory  = 2.0
 
-    err_diff = abs((slope_diff - slope_diff_theory))
-    err_loc  = abs((slope_loc  - slope_loc_theory))
+    err_diff = abs((slope_diff - slope_diff_theory)/slope_diff_theory)
+    err_loc  = abs((slope_loc  - slope_loc_theory)/slope_loc_theory)
 
-
-    return χ2_red_diff, err_diff, χ2_red_loc, err_loc
+    println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s) =====")
+    println("χ2 diff = $(round(χ2_diff, digits=4)), χ2 red diff = $(round(χ2_red_diff, digits=4))")
+    println("χ2 loc = $(round(χ2_loc, digits=4)), χ2 red loc = $(round(χ2_red_loc, digits=4))")
+    println("R² diff = $(round(R2_diff, digits=4))")
+    println("R² loc = $(round(R2_loc, digits=4))")  
+    println("Slope diff = $(round(slope_diff, digits=4)), error = $(round(err_diff, digits=4))")
+    println("Slope loc = $(round(slope_loc, digits=4)), error = $(round(err_loc, digits=4))")
 end
 
 #critical Kc analysis from collapse shifts
