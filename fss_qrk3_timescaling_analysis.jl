@@ -30,80 +30,85 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     #savefig(plt2, "fss_collapsed_data_d$(dim).png")
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; plotshow=false)
-    # shift + convert
-    X_shifted = Float64.(X .+ shifts)
-    Kc_index = argmax(exp.(shifts))
-    K_diff_mask = K_vals .> K_vals[Kc_index]
-    K_loc_mask = K_vals .< K_vals[Kc_index]
+function filter_data(X, Y, Y_err)
+    Xf = Float64[]
+    Yf = Float64[]
+    Ef = Float64[]
 
-    # diff side
-    Y_diff = vec(Float64.(Y[K_diff_mask, :]))
-    Y_diff_err = vec(Float64.(Y_err[K_diff_mask, :]))
+    @inbounds for i in eachindex(X)
+        xi = X[i]
+        yi = Y[i]
+        ei = Y_err[i]
+
+        if !isnan(xi) && !isnan(yi) && !isnan(ei) && ei > 0
+            push!(Xf, xi)
+            push!(Yf, yi)
+            push!(Ef, ei)
+        end
+    end
+
+    return Xf, Yf, Ef
+end
+
+function perform_collapse_quality(
+    K_vals, X, Y, Y_err, shifts, d, a_s, data_type;
+    plotshow=false
+)
+
+    X_shifted = X .+ shifts
+    Kc_index = argmax(shifts)
+
+    Kc = K_vals[Kc_index]
+    K_diff_mask = K_vals .> Kc
+    K_loc_mask  = K_vals .< Kc
+
+    # Flatten once
     X_diff = vec(X_shifted[K_diff_mask, :])
+    Y_diff = vec(Y[K_diff_mask, :])
+    E_diff = vec(Y_err[K_diff_mask, :])
 
-    # loc side
-    Y_loc = vec(Float64.(Y[K_loc_mask, :]))
-    Y_loc_err = vec(Float64.(Y_err[K_loc_mask, :]))
     X_loc = vec(X_shifted[K_loc_mask, :])
+    Y_loc = vec(Y[K_loc_mask, :])
+    E_loc = vec(Y_err[K_loc_mask, :])
 
-    # eliminate problematic points (NaN or zero error)
-    mask_diff = .!(isnan.(Y_diff) .| isnan.(Y_diff_err) .| isnan.(X_diff))
-    # also filter out zero uncertainties since they generate Inf weights
-    mask_diff .&= (Y_diff_err .> 0)
-    X_diff = X_diff[mask_diff];
-    Y_diff = Y_diff[mask_diff];
-    Y_diff_err = Y_diff_err[mask_diff];
-    if isempty(X_diff)
-        error("perform_collapse_quality: no valid data points for diff fit after filtering")
-    end
+    # Filter
+    X_diff, Y_diff, E_diff = filter_data(X_diff, Y_diff, E_diff)
+    X_loc,  Y_loc,  E_loc  = filter_data(X_loc,  Y_loc,  E_loc)
 
-    mask_loc = .!(isnan.(Y_loc) .| isnan.(Y_loc_err) .| isnan.(X_loc))
-    mask_loc .&= (Y_loc_err .> 0)
-    X_loc = X_loc[mask_loc];
-    Y_loc = Y_loc[mask_loc];
-    Y_loc_err = Y_loc_err[mask_loc];
-    if isempty(X_loc)
-        error("perform_collapse_quality: no valid data points for loc fit after filtering")
-    end
+    isempty(X_diff) && error("No valid diff data")
+    isempty(X_loc)  && error("No valid loc data")
 
-    #fit
-    model(x, p) = p[1] .* x .+ p[2]
-    guess_diff = Float64[-(d-2), 0.0] #guess for diff side
+    model(x, p) = @. p[1] * x + p[2]
+
+    guess_diff = [- (d - 2), 0.0]
+    guess_loc  = [2.0, 0.0]
+
     fit_diff = curve_fit(model, X_diff, Y_diff, guess_diff)
-    guess_loc = Float64[2.0, 0.0]
-    fit_loc = curve_fit(model, X_loc, Y_loc, guess_loc)
+    fit_loc  = curve_fit(model, X_loc,  Y_loc,  guess_loc)
 
-    #plot
-    if plotshow == true
-        plt = plot(title=latexstring("Fit quality of collapse \$d=$(d)\$, \$a_s=$(a_s)a_0\$"), xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
-        scatter!(plt, X_diff, Y_diff, yerror=Y_diff_err, label="Diff side", marker=:o)
-        plot!(plt, X_diff, model(X_diff, coef(fit_diff)), lw=2, label="Diff fit")
-        scatter!(plt, X_loc, Y_loc, yerror=Y_loc_err, label="Loc side", marker=:o)
-        plot!(plt, X_loc, model(X_loc, coef(fit_loc)), lw=2, label="Loc fit")
-        display(plt)
-    end
+    coef_diff = coef(fit_diff)
+    coef_loc  = coef(fit_loc)
 
-    #goodness of fits
-    resid_diff = Y_diff .- model(X_diff, coef(fit_diff))
-    resid_loc = Y_loc .- model(X_loc, coef(fit_loc))
-    
-    #Rsquared metric
-    ss_tot_diff = sum((Y_diff .- mean(Y_diff)).^2)
-    ss_res_diff = sum(resid_diff.^2)
+    # Residuals (no temporary model array)
+    resid_diff = @. Y_diff - (coef_diff[1] * X_diff + coef_diff[2])
+    resid_loc  = @. Y_loc  - (coef_loc[1]  * X_loc  + coef_loc[2])
+
+    μ_diff = mean(Y_diff)
+    μ_loc  = mean(Y_loc)
+
+    ss_tot_diff = sum(abs2(y - μ_diff) for y in Y_diff)
+    ss_res_diff = sum(abs2, resid_diff)
     R2_diff = 1 - ss_res_diff / ss_tot_diff
-    ss_tot_loc = sum((Y_loc .- mean(Y_loc)).^2)
-    ss_res_loc = sum(resid_loc.^2)
+
+    ss_tot_loc = sum(abs2(y - μ_loc) for y in Y_loc)
+    ss_res_loc = sum(abs2, resid_loc)
     R2_loc = 1 - ss_res_loc / ss_tot_loc
 
-    #Xi sqared metric
-    χ2_diff = sum((resid_diff ./ Y_diff_err).^2)
-    dof_diff = length(Y_diff) - length(coef(fit_diff))
-    χ2_red_diff = χ2_diff / max(dof_diff, 1)
+    χ2_diff = sum(abs2(r / e) for (r,e) in zip(resid_diff, E_diff))
+    χ2_loc  = sum(abs2(r / e) for (r,e) in zip(resid_loc,  E_loc))
 
-    χ2_loc = sum((resid_loc ./ Y_loc_err).^2)
-    dof_loc = length(Y_loc) - length(coef(fit_loc))
-    χ2_red_loc = χ2_loc / max(dof_loc, 1)
+    χ2_red_diff = χ2_diff / max(length(Y_diff) - length(coef_diff), 1)
+    χ2_red_loc  = χ2_loc  / max(length(Y_loc)  - length(coef_loc),  1)
 
     # slope errors
     slope_diff = coef(fit_diff)[1]
@@ -122,6 +127,8 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type
     println("Slope diff = $(round(slope_diff, digits=4)), error = $(round(err_diff, digits=4))")
     println("Slope loc = $(round(slope_loc, digits=4)), error = $(round(err_loc, digits=4))")
 end
+
+
 
 #critical Kc analysis from collapse shifts
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
