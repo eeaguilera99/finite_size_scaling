@@ -35,17 +35,18 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, dim; plotshow=fal
     # shift + convert
     X_shifted = Float64.(X .+ shifts)
     Kc_index = argmax(exp.(shifts))
-    Kc = K_vals[Kc_index]
+    K_diff_mask = K_vals .> K_vals[Kc_index]
+    K_loc_mask = K_vals .< K_vals[Kc_index]
 
     # diff side
-    Y_diff = vec(Float64.(Y[Kc_index:end, :]))
-    Y_diff_err = vec(Float64.(Y_err[Kc_index:end, :]))
-    X_diff = vec(X_shifted[Kc_index:end, :])
+    Y_diff = vec(Float64.(Y[K_diff_mask, :]))
+    Y_diff_err = vec(Float64.(Y_err[K_diff_mask, :]))
+    X_diff = vec(X_shifted[K_diff_mask, :])
 
     # loc side
-    Y_loc = vec(Float64.(Y[1:Kc_index, :]))
-    Y_loc_err = vec(Float64.(Y_err[1:Kc_index, :]))
-    X_loc = vec(X_shifted[1:Kc_index, :])
+    Y_loc = vec(Float64.(Y[K_loc_mask, :]))
+    Y_loc_err = vec(Float64.(Y_err[K_loc_mask, :]))
+    X_loc = vec(X_shifted[K_loc_mask, :])
 
     # eliminate problematic points (NaN or zero error)
     mask_diff = .!(isnan.(Y_diff) .| isnan.(Y_diff_err) .| isnan.(X_diff))
