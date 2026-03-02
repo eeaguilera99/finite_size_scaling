@@ -50,10 +50,7 @@ function filter_data(X, Y, Y_err)
     return Xf, Yf, Ef
 end
 
-function perform_collapse_quality(
-    K_vals, X, Y, Y_err, shifts, d, a_s, data_type;
-    plotshow=false
-)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; plotshow=false)
 
     X_shifted = X .+ shifts
     Kc_index = argmax(shifts)
