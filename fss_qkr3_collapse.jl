@@ -21,7 +21,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 
 # Perform collapse
 #perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=true, d=dim)
-@time perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, dim, a_s, "Ex"; plotshow=false)
+@time perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, s_rel_data, shifts_data, dim, a_s, "Ex"; Kc_offset=0, plotshow=true)
 
 
 #=

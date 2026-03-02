@@ -50,7 +50,7 @@ function filter_data(X, Y, Y_err)
     return Xf, Yf, Ef
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; Kc_offset=0, plotshow=false)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, data_type; Kc_offset=0, plotshow=false)
 
     X_shifted = X .+ shifts
     Kc_index = argmax(shifts)
@@ -135,6 +135,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type
     println("R² loc = $(round(R2_loc, digits=4))")  
     println("Slope error = $(round(err_diff, digits=4))")
     println("Slope error = $(round(err_loc, digits=4))")
+    println("Collapse tightness quality σ_rel = $(round(s_rel, digits=4))")
 end
 
 
