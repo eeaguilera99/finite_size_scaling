@@ -2,7 +2,7 @@ include("fss_qkr3_timescaling.jl")
 using CSV, DataFrames, Plots, LaTeXStrings
 
 
-a_s = 920
+a_s = 775
 K_vals_data = vec(Matrix(CSV.read("dataMF/kappa.csv", DataFrame; header=false)))             # Kick strengths
 t_vals_0 = vec(Matrix(CSV.read("dataMF/d=5_horizontal_axis.csv", DataFrame; header=false)))  # Times
 p2_mat_0 = Matrix(CSV.read("dataMF/d=3_scaled_kinetic_energy_$(a_s).csv", DataFrame; header=false))
@@ -23,8 +23,8 @@ t_vals_data, p2_mat_data, nc_mat_data = revert_scale(t_vals_0, p2_mat_0, nc_mat_
 p2_err_mat = 0.01 .* p2_mat_data  # assume 1% error if no data
 nc_err_mat = 0.01 .* nc_mat_data 
 
-avg = 0
-t_transient = 1
+avg = true
+t_transient = 8
 #Smothening 
 
 #Adaptive moving avg
