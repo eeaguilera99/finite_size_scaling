@@ -4,7 +4,7 @@ using LaTeXStrings
 using LsqFit
 
 #plotting function for raw and collapsed data
-function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false)
+function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true)
     if plot_label_b == true
         plot_label = "K="*string(round(K, digits=3))
     else
@@ -23,8 +23,14 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     # Plot after collapse
     plt2 = plot(title=latexstring("Data collapse $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
         xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
-    for (i,K) in enumerate(K_vals)
-        plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
+    if ploterr == true
+        for (i,K) in enumerate(K_vals)
+            plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
+        end
+    else
+        for (i,K) in enumerate(K_vals)
+            plot!(plt2, X[:] .+ shifts[i], Y[i,:], marker=:o, label=plot_label)
+        end
     end
     display(plt2)   
     #savefig(plt2, "fss_collapsed_data_d$(dim).png")
@@ -129,16 +135,17 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
     end
 
     println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s) =====")
+    println("χ2 red avg = $(round((χ2_red_diff + χ2_red_loc)/2, digits=4))")
     println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
     println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
+    println("R² avg = $(round((R2_diff + R2_loc)/2, digits=4))")
     println("R² diff = $(round(R2_diff, digits=4))")
-    println("R² loc = $(round(R2_loc, digits=4))")  
-    println("Slope error = $(round(err_diff, digits=4))")
-    println("Slope error = $(round(err_loc, digits=4))")
+    println("R² loc = $(round(R2_loc, digits=4))")
+    println("Slope err avg = $(round((err_diff + err_loc)/2, digits=4))")  
+    println("Slope error diff = $(round(err_diff, digits=4))")
+    println("Slope error loc = $(round(err_loc, digits=4))")
     println("Collapse tightness quality σ_rel = $(round(s_rel, digits=4))")
 end
-
-
 
 #critical Kc analysis from collapse shifts
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)

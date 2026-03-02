@@ -1,4 +1,4 @@
-include("imp_data_theory.jl")
+#include("imp_data_theory.jl")
 include("fss_qkr3_timescaling.jl")
 include("fss_qrk3_timescaling_analysis.jl")
 
@@ -20,7 +20,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
-perform_collapse(K_vals, X1, Y1, Yerr1, shifts1, s_rel1; data_type=" Th E_k", raw=true, d=dim1)
-perform_collapse(K_vals, X2, Y2, Yerr2, shifts2, s_rel2; data_type=" Th nc^-2", raw=true, d=dim2)
+#perform_collapse(K_vals, X1, Y1, Yerr1, shifts1; data_type=" Th E_k", raw=true, d=d1)
+perform_collapse(K_vals_data, X2, Y2, Yerr2, shifts2; data_type="Th nc^-2", raw=true, d=d2)
 
 
