@@ -50,14 +50,16 @@ function filter_data(X, Y, Y_err)
     return Xf, Yf, Ef
 end
 
-function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; plotshow=false)
+function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type; Kc_offset=0, plotshow=false)
 
     X_shifted = X .+ shifts
     Kc_index = argmax(shifts)
 
-    Kc = K_vals[Kc_index]
-    K_diff_mask = K_vals .> Kc
-    K_loc_mask  = K_vals .< Kc
+
+    Kc_1 = K_vals[Kc_index + Kc_offset]
+    Kc_2 = K_vals[Kc_index - Kc_offset]
+    K_diff_mask = K_vals .> Kc_1 
+    K_loc_mask  = K_vals .< Kc_2
 
     # Flatten once
     X_diff = vec(X_shifted[K_diff_mask, :])
@@ -116,13 +118,23 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, d, a_s, data_type
     err_diff = abs((slope_diff - slope_diff_theory)/slope_diff_theory)
     err_loc  = abs((slope_loc  - slope_loc_theory)/slope_loc_theory)
 
+    if plotshow == true
+        plt = plot(title=latexstring("Collapse quality analysis $(data_type), \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
+            xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
+        scatter!(plt, X_diff, Y_diff, seriestype=:scatter, label="diff side")
+        plot!(plt, X_diff, model(X_diff, coef(fit_diff)), label="diff fit (slope ≈ $(round(coef(fit_diff)[1], digits=3)))")
+        scatter!(plt, X_loc, Y_loc, seriestype=:scatter, label="loc side")
+        plot!(plt, X_loc, model(X_loc, coef(fit_loc)), label="loc fit (slope ≈ $(round(coef(fit_loc)[1], digits=3)))")
+        display(plt)
+    end
+
     println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s) =====")
-    println("χ2 diff = $(round(χ2_diff, digits=4)), χ2 red diff = $(round(χ2_red_diff, digits=4))")
-    println("χ2 loc = $(round(χ2_loc, digits=4)), χ2 red loc = $(round(χ2_red_loc, digits=4))")
+    println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
+    println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
     println("R² diff = $(round(R2_diff, digits=4))")
     println("R² loc = $(round(R2_loc, digits=4))")  
-    println("Slope diff = $(round(slope_diff, digits=4)), error = $(round(err_diff, digits=4))")
-    println("Slope loc = $(round(slope_loc, digits=4)), error = $(round(err_loc, digits=4))")
+    println("Slope error = $(round(err_diff, digits=4))")
+    println("Slope error = $(round(err_loc, digits=4))")
 end
 
 
