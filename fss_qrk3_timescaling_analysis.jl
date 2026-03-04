@@ -148,16 +148,82 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
 end
 
 #critical Kc analysis from collapse shifts
-function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0)
+"""
+Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
+
+Returns best-fit parameters + standard errors from covariance matrix.
+"""
+function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclude_tol_frac=0.02)
+        #filter points for fit    
+        if n_k_filter != 0
+                n_k_filter += 1  # account for Julia 1-based indexing    
+                xi = xi[n_k_filter:end]
+                xierr = xierr[n_k_filter:end]
+                K_vals = K_vals[n_k_filter:end]
+        end
+
+    u = (1)./xi
+    uerr = u.^2 .*xierr
+    # Model function
+    model(K, p) = abs(p[1]) .+ p[2] .* abs.(K .- p[4]).^(abs(p[3]))   #1/ξ(K) = β₀ + A|K−Kc|^{ν}
+    names = ["β₀", "A", "ν", "Kc"]
+
+    # Initial guess
+    β₀₀ = minimum(u)*0.5
+    A₀  = maximum(u)
+    ν₀  = 1
+    Kc₀ = K_vals[argmin(u) + K_val_g]  # where ξ is largest
+    println(Kc₀)
+    p0 = [β₀₀, A₀, ν₀, Kc₀]
+
+    # Mask out values too close to trial Kc₀
+    ΔK = maximum(K_vals) - minimum(K_vals)
+    mask = abs.(K_vals .- Kc₀) .> exclude_tol_frac*ΔK
+    Kfit, ufit, uerrfit = K_vals[mask], u[mask], uerr[mask]
+
+    # Perform nonlinear least squares fit
+    fit = curve_fit(model, Kfit, ufit, p0)
+    pbest = coef(fit)
+    covar = estimate_covar(fit)
+    perr  = sqrt.(diag(covar))
+
+    # goodness of fit
+    residuals = ufit .- model(Kfit, pbest)
+    if uerr[1] == 0.0
+        χ2 = sum((residuals[2:end] ./ uerrfit[2:end]).^2)
+    else
+        χ2 = sum((residuals ./ uerrfit).^2)
+    end
+    dof = length(ufit) - length(pbest)
+    χ2_red = χ2 / dof
+
+    # Unpack results
+    β0, A, ν, Kc = pbest
+    err_β0, err_A, err_ν, err_Kc = perr
+
+
+    return (β0=abs(β0), A=A, ν=abs(ν), Kc=Kc,
+            err_β0=err_β0, err_A=err_A, err_ν=err_ν, err_Kc=err_Kc, χ2=χ2, χ2_red=χ2_red)
+end
+
+
+function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true)
         xi = exp.(shifts)
         xierr = xi.*shifts_err
         results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
-        plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
-                        xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
-                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
-                        label="data")
+        if show_xierr ==true 
+            plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
+                            xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
+                            title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                            label="data")
+        else
+            plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
+                            xlabel=L"κ", ylabel=L"ξ(κ)",
+                            title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                            label="data")
+        end
         ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
         plot!(plt_fit1, Kgrid, ξfit1, lw=2,
                 label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
