@@ -136,14 +136,14 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
 
     println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s) =====")
     println("χ2 red avg = $(round((χ2_red_diff + χ2_red_loc)/2, digits=4))")
-    println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
-    println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
+    #println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
+    #println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
     println("R² avg = $(round((R2_diff + R2_loc)/2, digits=4))")
-    println("R² diff = $(round(R2_diff, digits=4))")
-    println("R² loc = $(round(R2_loc, digits=4))")
+    #println("R² diff = $(round(R2_diff, digits=4))")
+    #println("R² loc = $(round(R2_loc, digits=4))")
     println("Slope err avg = $(round((err_diff + err_loc)/2, digits=4))")  
-    println("Slope error diff = $(round(err_diff, digits=4))")
-    println("Slope error loc = $(round(err_loc, digits=4))")
+    #println("Slope error diff = $(round(err_diff, digits=4))")
+    #println("Slope error loc = $(round(err_loc, digits=4))")
     println("Collapse tightness quality σ_rel = $(round(s_rel, digits=4))")
 end
 
@@ -155,7 +155,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
         # Plot fit
         Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
         plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
-                        xlabel=L"κ", ylabel=L"ξ(κ)",
+                        xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
                         title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
                         label="data")
         ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
@@ -163,7 +163,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
                 label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
         vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
         display(plt_fit1)
-        println("\n===== Critical fit $(data_type) with offset and error bars =====")
+        println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
         println("κc1  ≈ $(results.Kc)  ± $(results.err_Kc)")
         println("ν1   ≈ $(results.ν)   ± $(results.err_ν)")
         println("A1   ≈ $(results.A)   ± $(results.err_A)")
@@ -290,7 +290,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
         display(plt3)
         #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
-    println("\n===== Linear finite-time-scaling results $data_type=====")
+    println("\n===== Linear finite-time-scaling results $data_type d=$(dim), a_s=$(a_s) =====")
     println("ν  = $(round(ν,digits=4)) ± $(round(ν_err,digits=4))")
     println("Goodness of the fit")
     println("χ2 loglog = $(round(chi2 ,digits=4))")
