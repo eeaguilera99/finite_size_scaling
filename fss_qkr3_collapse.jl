@@ -1,4 +1,4 @@
-include("imp_data_ex.jl")
+#@time include("imp_data_ex.jl")
 include("fss_qkr3_timescaling.jl")
 include("fss_qrk3_timescaling_analysis.jl")
 
@@ -20,8 +20,8 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 # Perform collapse
-#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=true, d=dim)
-@time perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, s_rel_data, shifts_data, dim, a_s, "Ex"; Kc_offset=0, plotshow=true)
+#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=false, d=dim)
+perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, dim, a_s, data_type; Kc_offset=2, plotshow=false)
 
 
 #=

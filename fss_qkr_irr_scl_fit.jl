@@ -1,4 +1,5 @@
 include("fss_qkr3_timescaling.jl")
+include("fss_qrk3_timescaling_analysis.jl")
 
 F01 = 1
 F10 = 1
@@ -7,28 +8,26 @@ dim = 3
 
 t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5, n_kicks_f=0)
 
-res, shifts, X1, Y1, Y1err, s_rel = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=1, n_kicks_f=0)
-
 # Model function for fitting with corrections to scaling
 function model(xy, p)
     K, t = xy[1,:], xy[2,:]
-    return p[4] .+ p[1].*((p[2] .- K)).*(t.^(1/p[3])).*F01 .+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
+    return p[4] .+ p[1].*((p[2] .- K)).*(t.^(1/p[3])).*F01 #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
 end
 
 #Flatten
-X , Y = vec([k for k in K_vals, t in t_vals]), vec([t for t in t_vals, K in K_vals])
+X, Y = vec([k for k in K_vals, t in t_vals]), vec([t for t in t_vals, K in K_vals])
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [5, 1.2, 0.5, -24, 2, -1, 1]  # initial guesses
-fit = curve_fit(model, [X'; Y'], vec(Y1), p0)
+p0 = [5, 1.2, 0.5, -24.0] #, 2, -1, 1]  initial guesses
+fit = curve_fit(model, [X'; Y'], vec(Y_data), p0)
 pbest = coef(fit)
-b1, Kc, α, F00, ψ, y, F11 = pbest #
+b1, Kc, α, F00 = pbest #, ψ, y, F11
 
 
 #quality of fit
-residuals = vec(Y1) .- model([X'; Y'], pbest)
-χ2 = sum((residuals ./ vec(Y1err)).^2)
-dof = length(vec(Y1)) - length(pbest)
+residuals = vec(Y_data) .- model([X'; Y'], pbest)
+χ2 = sum((residuals ./ vec(Yerr_data)).^2)
+dof = length(vec(Y_data)) - length(pbest)
 
 
 #=

@@ -1,4 +1,4 @@
-include("imp_data_ex.jl")
+#include("imp_data_ex.jl")
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 include("fss_qrk3_timescaling_analysis.jl")
 
@@ -17,9 +17,9 @@ Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 """
 
 
-Kc = 0.794
-dim = 4
-
+Kc = round(Kc_1, digits=3) # use Kc from analysis
+dim = 5
+t_transient = 2
 finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=2, n_kicks_f=0)
+                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=t_transient, n_kicks_f=0)
 
