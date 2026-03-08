@@ -230,11 +230,11 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
         vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
         display(plt_fit1)
         println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
-        println("κc1  ≈ $(results.Kc)  ± $(results.err_Kc)")
-        println("ν1   ≈ $(results.ν)   ± $(results.err_ν)")
-        println("A1   ≈ $(results.A)   ± $(results.err_A)")
-        println("β_01  ≈ $(results.β0)  ± $(results.err_β0)")
-        println("χ²1  = $(results.χ2),  χ²_red1 = $(results.χ2_red)")
+        println("κc1  ≈ $(round(results.Kc, digits=3))  ± $(round(results.err_Kc, digits=3))")
+        println("ν1   ≈ $(round(results.ν, digits=3))   ± $(round(results.err_ν, digits=3))")
+        println("A1   ≈ $(round(results.A, digits=3))   ± $(round(results.err_A, digits=3))")
+        println("β_01  ≈ $(round(results.β0, digits=3))  ± $(round(results.err_β0, digits=3))")
+        println("χ²1  = $(round(results.χ2, digits=3)),  χ²_red1 = $(round(results.χ2_red, digits=3))")
     return results
 end
 
