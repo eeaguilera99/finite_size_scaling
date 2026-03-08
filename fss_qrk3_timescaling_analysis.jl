@@ -358,10 +358,10 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
         #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
     println("\n===== Linear finite-time-scaling results $data_type d=$(dim), a_s=$(a_s) =====")
-    println("ν  = $(round(ν,digits=4)) ± $(round(ν_err,digits=4))")
+    println("ν  = $(round(ν,digits=3)) ± $(round(ν_err,digits=3))")
     println("Goodness of the fit")
-    println("χ2 loglog = $(round(chi2 ,digits=4))")
-    println("χ2 log log red = $(round(reduced_chi2, digits=4))")
+    #println("χ2 loglog = $(round(chi2 ,digits=3))")
+    println("χ2 red = $(round(reduced_chi2, digits=3))")
 end
 
 #Time evolution at criticality for dimension
