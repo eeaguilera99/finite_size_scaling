@@ -83,12 +83,12 @@ function apply_lowpass_fft_matrix(M::Matrix, cutoff_ratio::Float64; p=true)
 end
 
 # Functions to exclude early/late time points (Nkicks) or Kkicks from analysis
-function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
-    n_Nkicks_f = size(t_vals,1) - n_kicks_f #index to end at
-    t_vals = t_vals[n_kicks_i:n_Nkicks_f]
-    p2_mat = p2_mat[:,n_kicks_i:n_Nkicks_f]
-    p2_err_mat = p2_err_mat[:,n_kicks_i:n_Nkicks_f]
-    return t_vals, p2_mat, p2_err_mat
+function filter_Nkicks(tt_vals, mat, err_mat; n_kicks_i=1, n_kicks_f=0)
+    n_Nkicks_f = size(tt_vals,1) - n_kicks_f #index to end at
+    t_vals_filtered = tt_vals[n_kicks_i:n_Nkicks_f]
+    mat_filtered = mat[:,n_kicks_i:n_Nkicks_f]
+    err_mat_filtered = err_mat[:,n_kicks_i:n_Nkicks_f]
+    return t_vals_filtered, mat_filtered, err_mat_filtered
 end
 
 function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
