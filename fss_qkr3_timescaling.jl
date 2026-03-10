@@ -188,8 +188,11 @@ function pairwise_scaling_collapse(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_ki
     # --- build interpolations ---
     interpolants = Vector{Any}(undef,M)
 
+    X_sorted = reverse(X)
+
     for i in 1:M
-        interpolants[i] = LinearInterpolation(X, Y[i,:], extrapolation_bc=Line())
+        Y_sorted = reverse(Y[i,:])
+        interpolants[i] = LinearInterpolation(X_sorted, Y_sorted, extrapolation_bc=Line())
     end
 
     # --- compute pairwise shifts Δ_ij ---
@@ -199,8 +202,8 @@ function pairwise_scaling_collapse(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_ki
     for i in 1:M-1
         for j in i+1:M
 
-            Xi = X
-            Yi = Y[i,:]
+            Xi = X_sorted
+            Yi = reverse(Y[i,:])
 
             f_j = interpolants[j]
 
