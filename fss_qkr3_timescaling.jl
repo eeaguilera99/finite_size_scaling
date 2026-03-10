@@ -99,73 +99,146 @@ function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
     return Kk_vals, mat, err_mat
 end
 
-#Main function for finite time scaling analysis
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3, n_kicks_i=1, n_kicks_f=0)
-    
-    #filter Nkicks range
-    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
+function filter_transients_per_curve(t_vals, p2_mat, err_mat, n_kicks_i_vec; n_kicks_f_vec=zeros(Int,length(n_kicks_i_vec)))
 
-    M, N = size(p2_mat)
+    M = size(p2_mat,1)
 
-    # Observable: Λ = <p^2>/t^(2/3)
-    Λ = p2_mat ./ (t_vals' .^ (2/d))
-    Λ_err = p2_err_mat ./ (t_vals' .^ (2/d))
+    curves = []
 
-    # Log variables
-    X = -log.(t_vals' .^ (1/d))     # 1×N
-    Y = log.(Λ)                # M×N
-    # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
-    Yerr = Λ_err ./ Λ
+    for i in 1:M
 
-    # Flatten for binning
-    allY = vec(Y)
-    y_min, y_max = minimum(allY), maximum(allY) #range of data Yaxis
-    bins = range(y_min, y_max; length=nbins+1)
-    bin_ids = [searchsortedlast(bins, y) for y in allY] #assigns each y-value to a bin number from 1 to nbins
+        start_i = n_kicks_i_vec[i]
+        end_i   = length(t_vals) - n_kicks_f_vec[i]
 
-    # Cost function: variance of shifted X within Y-bins
-    function cost(a_full::Vector)
-        # Shift X values by the amount specified in a_full
-        shiftedX = vec(X .+ a_full .* ones(1,N))
-        
-        total_var = 0.0
-        for b in 1:nbins
-            # Find all points that fall in bin b
-            mask = (bin_ids .== b)
-            
-            # Only consider bins with more than 1 point
-            if count(mask) > 1
-                # Get X values for points in this bin
-                xb = shiftedX[mask]
-                # Add weighted variance of X values in this bin
-                total_var += var(xb) * count(mask)
-            end
-        end
-        return total_var
+        t_i   = t_vals[start_i:end_i]
+        p2_i  = p2_mat[i,start_i:end_i]
+        err_i = err_mat[i,start_i:end_i]
+
+        push!(curves, (t=t_i, p2=p2_i, err=err_i))
+
     end
 
-    # Fix gauge: a₁ = 0
-    function constrained_cost(a_free::Vector)
+    return curves
+
+end
+
+function compute_scaling_data(curves; d=3)
+
+    M = length(curves)
+
+    X = Vector{Vector{Float64}}(undef,M)
+    Y = Vector{Vector{Float64}}(undef,M)
+    Yerr = Vector{Vector{Float64}}(undef,M)
+
+    for i in 1:M
+
+        t = curves[i].t
+        p2 = curves[i].p2
+        p2err = curves[i].err
+
+        Λ = p2 ./ (t .^(2/d))
+        Λerr = p2err ./ (t .^(2/d))
+
+        X[i] = -log.(t) ./ d
+        Y[i] = log.(Λ)
+        Yerr[i] = Λerr ./ Λ
+
+    end
+
+    return X, Y, Yerr
+
+end
+
+function flatten_data(X,Y)
+
+    X_all = Float64[]
+    Y_all = Float64[]
+    curve_id = Int[]
+
+    for i in 1:length(X)
+        append!(X_all, X[i])
+        append!(Y_all, Y[i])
+        append!(curve_id, fill(i,length(X[i])))
+    end
+
+    return X_all, Y_all, curve_id
+
+end
+
+#Main function for finite time scaling analysis
+function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat, n_kicks_i_vec; d=3, nbins=100)
+
+    curves = filter_transients_per_curve(t_vals, p2_mat, p2_err_mat, n_kicks_i_vec)
+
+    X, Y, Yerr = compute_scaling_data(curves, d=d)
+
+    M = length(X)
+
+    # Flatten data
+    X_all, Y_all, curve_id = flatten_data(X, Y)
+
+    # Bin in Y
+    y_min, y_max = minimum(Y_all), maximum(Y_all)
+    bins = range(y_min, y_max; length=nbins+1)
+
+    bin_ids = [searchsortedlast(bins, y) for y in Y_all]
+
+    # === Cost function ===
+    function cost(a_full)
+
+        shiftedX = similar(X_all)
+
+        for j in eachindex(X_all)
+            shiftedX[j] = X_all[j] + a_full[curve_id[j]]
+        end
+
+        total_var = 0.0
+
+        for b in 1:nbins
+
+            mask = (bin_ids .== b)
+
+            if count(mask) > 1
+
+                xb = shiftedX[mask]
+
+                total_var += var(xb) * count(mask)
+
+            end
+        end
+
+        return total_var
+
+    end
+
+    # Gauge fixing
+    function constrained_cost(a_free)
+
         a_full = vcat(0.0, a_free)
+
         return cost(a_full)
+
     end
 
     # Initial guess
     a0 = zeros(M-1)
 
-    # Minimize
+    # Optimization
     res = optimize(constrained_cost, a0, NelderMead())
+
     shifts = vcat(0.0, Optim.minimizer(res))
-    a_free_opt = Optim.minimizer(res)
 
-    # === Compute normalized scatter directly from res.minimum ===
-    total_points = M * N
+    # === Compute collapse quality ===
+    total_points = length(X_all)
+
     sX = sqrt(res.minimum / total_points)
-    Xp = X .+ shifts                     # shifted X matrix
-    sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
-    # === Return everything
+    shiftedX = [X_all[i] + shifts[curve_id[i]] for i in eachindex(X_all)]
+
+    sX_rel = sX / (maximum(shiftedX) - minimum(shiftedX) + eps())
+
     return shifts, X, Y, Yerr, sX_rel
+
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
