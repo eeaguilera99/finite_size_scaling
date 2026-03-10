@@ -154,13 +154,13 @@ Fit ξ(K) = ξ0 + A * |K - Kc|^{-ν} using LsqFit.jl
 Returns best-fit parameters + standard errors from covariance matrix.
 """
 function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclude_tol_frac=0.02)
-        #filter points for fit    
-        if n_k_filter != 0
-                n_k_filter += 1  # account for Julia 1-based indexing    
-                xi = xi[n_k_filter:end]
-                xierr = xierr[n_k_filter:end]
-                K_vals = K_vals[n_k_filter:end]
-        end
+    #filter points for fit    
+    if n_k_filter != 0
+        n_k_filter += 1  # account for Julia 1-based indexing    
+        xi = xi[n_k_filter:end]
+        xierr = xierr[n_k_filter:end]
+        K_vals = K_vals[n_k_filter:end]
+    end
 
     u = (1)./xi
     uerr = u.^2 .*xierr
@@ -173,7 +173,6 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclud
     A₀  = maximum(u)
     ν₀  = 1
     Kc₀ = K_vals[argmin(u) + K_val_g]  # where ξ is largest
-    println(Kc₀)
     p0 = [β₀₀, A₀, ν₀, Kc₀]
 
     # Mask out values too close to trial Kc₀
@@ -208,33 +207,34 @@ end
 
 
 function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true)
-        xi = exp.(shifts)
-        xierr = xi.*shifts_err
-        results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
-        # Plot fit
-        Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
-        if show_xierr ==true 
-            plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
-                            xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
-                            title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
-                            label="data")
-        else
-            plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
-                            xlabel=L"κ", ylabel=L"ξ(κ)",
-                            title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
-                            label="data")
-        end
-        ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
-        plot!(plt_fit1, Kgrid, ξfit1, lw=2,
-                label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
-        vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
-        display(plt_fit1)
-        println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
-        println("κc1  ≈ $(round(results.Kc, digits=3))  ± $(round(results.err_Kc, digits=3))")
-        println("ν1   ≈ $(round(results.ν, digits=3))   ± $(round(results.err_ν, digits=3))")
-        println("A1   ≈ $(round(results.A, digits=3))   ± $(round(results.err_A, digits=3))")
-        println("β_01  ≈ $(round(results.β0, digits=3))  ± $(round(results.err_β0, digits=3))")
-        println("χ²1  = $(round(results.χ2, digits=3)),  χ²_red1 = $(round(results.χ2_red, digits=3))")
+    xi = exp.(shifts)
+    xierr = xi.*shifts_err
+    results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
+    # Plot fit
+    Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
+    if show_xierr == true 
+        plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
+                        xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
+                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                        label="data")
+    else
+        plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
+                        xlabel=L"κ", ylabel=L"ξ(κ)",
+                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                        label="data")
+    end
+    ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
+    plot!(plt_fit1, Kgrid, ξfit1, lw=2,
+            label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
+    vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+    display(plt_fit1)
+
+    println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
+    println("κc1  ≈ $(round(results.Kc, digits=3))  ± $(round(results.err_Kc, digits=3))")
+    println("ν1   ≈ $(round(results.ν, digits=3))   ± $(round(results.err_ν, digits=3))")
+    println("A1   ≈ $(round(results.A, digits=3))   ± $(round(results.err_A, digits=3))")
+    println("β_01  ≈ $(round(results.β0, digits=3))  ± $(round(results.err_β0, digits=3))")
+    println("χ²1  = $(round(results.χ2, digits=3)),  χ²_red1 = $(round(results.χ2_red, digits=3))")
     return results
 end
 
