@@ -103,16 +103,16 @@ end
 function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3, n_kicks_i=1, n_kicks_f=0)
     
     #filter Nkicks range
-    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
+    t, p2, p2_err = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
 
-    M, N = size(p2_mat)
+    M, N = size(p2)
 
     # Observable: Λ = <p^2>/t^(2/3)
-    Λ = p2_mat ./ (t_vals' .^ (2/d))
-    Λ_err = p2_err_mat ./ (t_vals' .^ (2/d))
+    Λ = p2 ./ (t' .^ (2/d))
+    Λ_err = p2_err ./ (t' .^ (2/d))
 
     # Log variables
-    X = -log.(t_vals' .^ (1/d))     # 1×N
+    X = -log.(t' .^ (1/d))     # 1×N
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
     Yerr = Λ_err ./ Λ
@@ -169,7 +169,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
-function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100, nmc=500, rng=MersenneTwister(0))
+function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, nbins=100, nmc=500, rng=MersenneTwister(0))
     M, N = size(p2_mat)
     all_shifts = zeros(nmc, M)
 
@@ -180,7 +180,7 @@ function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100
 
         # Ensure positivity (log will be used downstream)
         p2_syn = max.(p2_syn, eps())
-        shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
+        shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, n_kicks_i=n_kicks_i, nbins=nbins)
         all_shifts[m, :] .= shifts_syn
     end
 
