@@ -55,7 +55,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts;
 
     for (i,K) in enumerate(K_vals)
 
-        label_i = plot_label_b ? "K=$(round(K,digits=3))" : ""
+        label_i = plot_label_b ? "K=$(round(K,digits=2))" : ""
 
         if ploterr
             plot!(
