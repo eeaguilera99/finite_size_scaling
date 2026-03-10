@@ -180,7 +180,7 @@ function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, nbins=100
 
         # Ensure positivity (log will be used downstream)
         p2_syn = max.(p2_syn, eps())
-        _, shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
+        shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, nbins=nbins)
         all_shifts[m, :] .= shifts_syn
     end
 
