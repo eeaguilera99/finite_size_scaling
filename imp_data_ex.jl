@@ -27,7 +27,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 dim = 4 # spatial dimension
 transient = 1
 data_type = "Ex"
-res_data, shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=transient, n_kicks_f=0)
+shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=transient, n_kicks_f=0)
 _, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)
 
 

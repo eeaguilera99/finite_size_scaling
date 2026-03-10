@@ -165,7 +165,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return res, shifts, X, Y, Yerr, sX_rel
+    return shifts, X, Y, Yerr, sX_rel
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
