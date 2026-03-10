@@ -7,22 +7,24 @@ F10 = 1
 dim = 3
 K_c_guess = 1.2
 
-t_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5, n_kicks_f=0)
+tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5, n_kicks_f=0)
 
 # Model function for fitting with corrections to scaling
 function model(xy, p)
     K, t = xy[1,:], xy[2,:]
-    return p[4] .+ p[1].*((p[2] .- K)).*(t.^(1/p[3])).*F01 #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
+    return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
+    #return p[5] .+ (p[1].*((K .- p[3])) .+ p[2].*(K .- p[3]).^2).*(t.^(1/(p[4]))).*F01 #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
 end
 
 #Flatten
-X, Y = vec([k for k in K_vals, t in t_vals]), vec([t for t in t_vals, K in K_vals])
+X, Y = vec([k for k in K_vals, t in tt_vals]), vec([t for t in tt_vals, K in K_vals])
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1, K_c_guess, dim*0.5, -24.0]#, 2, -1, 1]  initial guesses
+p0 = [1, K_c_guess, dim*0.5, -24]#, 2, -1, 1]  initial guesses
 fit = curve_fit(model, [X'; Y'], vec(Y_data), p0)
 pbest = coef(fit)
-b1, Kc, α, F00 = pbest #, ψ, y, F11
+b1, Kc, α, F00 = pbest
+#b1, b2, Kc, α, F00 = pbest #, ψ, y, F11
 
 
 #quality of fit
@@ -73,8 +75,8 @@ display(plt4)=#
 #plot scaling function witouth Corrections
 plt5 = plot(title="Scaling function without corrections d=$(dim), \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
 for t in 1:Int(length(t_vals))
-    Xfit = (Kc .- K_vals) .* (t_vals[t].^(1/α))
-    logΛ_nc = model([K_vals'; fill(t_vals[t], length(K_vals))'], [pbest[1], pbest[2], pbest[3], pbest[4]])
+    Xfit = (K_vals .- Kc) .* (t_vals[t].^(1/α))
+    logΛ_nc = model([K_vals'; fill(t_vals[t], length(K_vals))'], pbest)
     plot!(plt5, -(1/dim).*log.(abs.(Xfit)), logΛ_nc, seriestype=:scatter, ms=3, label="")
 end
 display(plt5)
