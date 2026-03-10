@@ -1,6 +1,6 @@
 using LinearAlgebra
 using Statistics, Random, Distributions
-using Optim
+using Optim, Interpolations
 using Plots
 using LsqFit
 using ForwardDiff
@@ -166,6 +166,97 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
 
     # === Return everything
     return res, shifts, X, Y, Yerr, sX_rel
+end
+
+#Pairsewise timescaling 
+function pairwise_scaling_collapse(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, n_kicks_f=0)
+
+    #filter Nkicks range
+    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
+
+    M,N = size(p2_mat)
+
+    # --- scaling observable ---
+    Λ = p2_mat ./ (t_vals'.^(2/3))
+    Λ_err = p2_err_mat ./ (t_vals' .^ (2/d))
+
+    X = -log.(t_vals) ./ 3
+    Y = log.(Λ)
+    # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
+    Yerr = Λ_err ./ Λ
+
+    # --- build interpolations ---
+    interpolants = Vector{Any}(undef,M)
+
+    for i in 1:M
+        interpolants[i] = LinearInterpolation(X, Y[i,:], extrapolation_bc=Line())
+    end
+
+    # --- compute pairwise shifts Δ_ij ---
+    pairs = []
+    deltas = Float64[]
+
+    for i in 1:M-1
+        for j in i+1:M
+
+            Xi = X
+            Yi = Y[i,:]
+
+            f_j = interpolants[j]
+
+            function χ2(Δ)
+
+                s = 0.0
+
+                for k in eachindex(Xi)
+
+                    xshift = Xi[k] + Δ
+
+                    yj = f_j(xshift)
+
+                    s += (Yi[k] - yj)^2
+
+                end
+
+                return s
+            end
+
+            res = optimize(χ2, -5.0, 5.0)
+
+            Δ = Optim.minimizer(res)
+
+            push!(pairs,(i,j))
+            push!(deltas,Δ)
+
+        end
+    end
+
+    # --- build least squares system ---
+    npairs = length(pairs)
+
+    A = zeros(npairs,M)
+    b = zeros(npairs)
+
+    for k in 1:npairs
+
+        i,j = pairs[k]
+
+        A[k,i] = -1
+        A[k,j] = 1
+
+        b[k] = deltas[k]
+
+    end
+
+    # --- fix gauge a1 = 0 ---
+    A = A[:,2:end]
+
+    a = A\b
+
+    shifts = vcat(0.0,a)
+
+    return shifts, X, Y, Yerr
+
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
