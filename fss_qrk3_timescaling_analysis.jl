@@ -4,7 +4,7 @@ using LaTeXStrings
 using LsqFit
 
 #plotting function for raw and collapsed data
-function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true)
+function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, savefig=false)
     if plot_label_b == true
         plot_label = "K="*string(round(K, digits=3))
     else
@@ -17,7 +17,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
         display(plt1)
-        #savefig(plt1, "fss_raw_data_d$(dim).png")
+        
     end
 
     # Plot after collapse
@@ -32,8 +32,11 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
             plot!(plt2, X[:] .+ shifts[i], Y[i,:], marker=:o, label=plot_label)
         end
     end
-    display(plt2)   
-    #savefig(plt2, "fss_collapsed_data_d$(dim).png")
+    display(plt2)
+    if savefig
+        savefig(plt1, "fss_raw_data_d$(d)_a$(a_s).pdf")   
+        savefig(plt2, "fss_collapsed_data_d$(d)_a$(a_s).pdf")
+    end
 end
 
 function filter_data(X, Y, Y_err)
@@ -55,6 +58,7 @@ function filter_data(X, Y, Y_err)
 
     return Xf, Yf, Ef
 end
+
 
 function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, data_type; Kc_offset=0, plotshow=false)
 
