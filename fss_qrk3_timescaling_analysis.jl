@@ -17,7 +17,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
         if save == true
-            savefig(plt1, "fss_raw_data_d=$(d)_a=$(a_s).pdf") 
+            savefig(plt1, "C:\\Users\\c7041417\\Documents\\Julia\\QKR\\finite_size_scaling\\plots\\Ex\\fss_raw_data_d=$(d)_a=$(a_s).pdf") 
         end 
         display(plt1)
     end
@@ -35,7 +35,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
         end
     end
     if save == true
-        savefig(plt2, "fss_collapsed_data_d=$(d)_a=$(a_s).pdf")
+        savefig(plt2, "C:\\Users\\c7041417\\Documents\\Julia\\QKR\\finite_size_scaling\\plots\\Ex\\fss_collapsed_data_d=$(d)_a=$(a_s).pdf")
     end
     display(plt2)
 end
@@ -211,7 +211,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclud
 end
 
 
-function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true)
+function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true, save=false)
     xi = exp.(shifts)
     xierr = xi.*shifts_err
     results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
@@ -232,6 +232,9 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
     plot!(plt_fit1, Kgrid, ξfit1, lw=2,
             label="fit (ν ≈ $(round(abs(results.ν),digits=3)))")
     vline!(plt_fit1, [results.Kc], linestyle=:dash, color=:red, label=L"\kappa_c")
+    if save == true
+        savefig(plt_fit1, "plots\\Ex\\Kc_fit_$(data_type)_d=$(d)_a=$(a_s).pdf")
+    end
     display(plt_fit1)
 
     println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
@@ -244,7 +247,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
 end
 
 #slopes analysis
-function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; data_type ="", Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=2, n_kicks_f=0)
+function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; data_type ="", Kc, ΔKfit=0.1, plotshow=true, n_kicks_i=2, n_kicks_f=0, save=false)
 
     
     #filter Nkicks range
@@ -341,7 +344,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title=latexstring("Linear fits near $data_type \$a_s=$(a_s)a_0\$ \$Δκ_{fit}\$=$(ΔKfit)"),
+        plt2 = plot(title=latexstring("Linear fits near $data_type \$a_s=$(a_s)a_0\$"),
                     xlabel=L"κ", ylabel=L"\ln{Λ(κ_c)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -351,18 +354,24 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
             plot!(plt2, Kloc, yloc, lw=2, ls=:dash, label="")
         end
         vline!(plt2, [Kc], color=:red, linestyle=:dash, label=L"\kappa_c="*"$(round(Kc,digits=3))")
-        display(plt2)
-        #savefig(plt2, "fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).png")
+        
+        #
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
                     title=latexstring("Scaling of slopes $data_type \$a_s=$(a_s)a_0\$"), label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
+        
+
+        if save == true
+            savefig(plt2, "plots\\Ex\\fss_linear_fits_d$(dim)_Kc$(round(Kc,digits=3)).pdf")
+            savefig(plt3, "plots\\Ex\\fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).pdf")
+        end
+        display(plt2)
         display(plt3)
-        #savefig(plt3, "fss_slope_scaling_d$(dim)_κc$(round(Kc,digits=3)).png")
     end
-    println("\n===== Linear finite-time-scaling results $data_type d=$(dim), a_s=$(a_s) =====")
+    println("\n===== Linear finite-time-scaling results $data_type d=$(dim), a_s=$(a_s), Δκfit=$(ΔKfit) =====")
     println("ν  = $(round(ν,digits=3)) ± $(round(ν_err,digits=3))")
     println("Goodness of the fit")
     #println("χ2 loglog = $(round(chi2 ,digits=3))")
