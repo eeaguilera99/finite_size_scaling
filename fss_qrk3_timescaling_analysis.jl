@@ -4,7 +4,7 @@ using LaTeXStrings
 using LsqFit
 
 #plotting function for raw and collapsed data
-function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, savefig=false)
+function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, save=false)
     if plot_label_b == true
         plot_label = "K="*string(round(K, digits=3))
     else
@@ -16,8 +16,10 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
         for (i,K) in enumerate(K_vals)
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
+        if save == true
+            savefig(plt1, "fss_raw_data_d=$(d)_a=$(a_s).pdf") 
+        end 
         display(plt1)
-        
     end
 
     # Plot after collapse
@@ -32,11 +34,10 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
             plot!(plt2, X[:] .+ shifts[i], Y[i,:], marker=:o, label=plot_label)
         end
     end
-    display(plt2)
-    if savefig
-        savefig(plt1, "fss_raw_data_d$(d)_a$(a_s).pdf")   
-        savefig(plt2, "fss_collapsed_data_d$(d)_a$(a_s).pdf")
+    if save == true
+        savefig(plt2, "fss_collapsed_data_d=$(d)_a=$(a_s).pdf")
     end
+    display(plt2)
 end
 
 function filter_data(X, Y, Y_err)
