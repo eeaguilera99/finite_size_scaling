@@ -108,11 +108,11 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     M, N = size(p2)
 
     # Observable: Λ = <p^2>/t^(2/3)
-    Λ = p2 ./ (t' .^ (2/d))
+    Λ = p2 ./ (t' .^ (2.0/d))
     Λ_err = p2_err ./ (t' .^ (2/d))
 
     # Log variables
-    X = -log.(t' .^ (1/d))     # 1×N
+    X = -log.(t' .^ (1.0/d))     # 1×N
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
     Yerr = Λ_err ./ Λ

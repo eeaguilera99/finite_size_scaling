@@ -12,7 +12,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     end
     if raw == true
         plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-            xlabel="ln(t^(-1/d))", ylabel="ln(Λ)")
+            xlabel=L"ln(t^(-1/d))", ylabel="ln(Λ)")
         for (i,K) in enumerate(K_vals)
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
