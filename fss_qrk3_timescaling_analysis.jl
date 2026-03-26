@@ -12,7 +12,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     end
     if raw == true
         plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-            xlabel=L"ln(t^(-1/d))", ylabel="ln(Λ)")
+            xlabel=latexstring("\$\\ln(t^{-1/d})\$"), ylabel=latexstring("\$ \\ln (Λ)\$"))
         for (i,K) in enumerate(K_vals)
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
@@ -123,7 +123,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
     # slope errors
     slope_diff = coef(fit_diff)[1]
     slope_loc = coef(fit_loc)[1]
-    slope_diff_theory = -(dim - 2)
+    slope_diff_theory = -(d - 2)
     slope_loc_theory  = 2.0
 
     err_diff = abs((slope_diff - slope_diff_theory)/slope_diff_theory)

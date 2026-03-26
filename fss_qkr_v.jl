@@ -18,8 +18,8 @@ Returns a NamedTuple with ν, slope, intercept, and the vectors of s(t).
 
 
 Kc = round(Kc_1, digits=3) # use Kc from analysis
-dim = 5
-t_transient = 2
-finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim;
-                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=t_transient, n_kicks_f=0)
+D = 3
+t_transient = 5
+finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, D;
+                                 Kc = Kc, ΔKfit = 0.5, n_kicks_i=t_transient, n_kicks_f=0, save=true)
 
