@@ -379,7 +379,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
 end
 
 #Time evolution at criticality for dimension
-function perform_tevol(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_index=0, data_type="")
+function perform_tevol_ln(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_index=0, data_type="")
 
     K_c1_i = argmax(shifts) + Kc_offset_index
 
@@ -400,11 +400,40 @@ function perform_tevol(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_inde
 
     #Plot
     plt1 = plot(title=latexstring("Time evolution of $(data_type) near \$κ_c\$"),
-        xlabel="Time (kicks)", ylabel=latexstring("$(data_type)"))
+        xlabel="Time (kicks)", ylabel=latexstring("\$E(t, κ_c)\$"))
     plot!(plt1, t_vals, data_mat[K_c1_i, :], xscale=:log10, yscale=:log10, marker=:o, label="κ_c=$(round(K_vals[K_c1_i], digits=3))", ms=3)
     plot!(plt1, t_vals, exp.(model(log.(t_vals),fit_params1)), xscale=:log10, yscale=:log10, label=latexstring("\$α≈$(round(fit_params1[1], digits=3)) ± $(round(α_err, digits=3))\$"))
     display(plt1)
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
+end
+
+function perform_tevol_powerlaw(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_index=0, data_type="")
+    
+    K_c1_i = argmax(shifts) + Kc_offset_index
+
+    #fit powerlaw with transient: model(t) = A * (t - t0)^α
+    model(t, p) = p[1] .* (t .- p[3]) .^ p[2]  # y = A * (t - t0)^α
+    guess1 = [1.0, 2/d, 1.0]  # Initial guess for [A, α, t0]
+    fit1 = curve_fit(model, t_vals, data_mat[K_c1_i, :], guess1)
+    fit_params1 = coef(fit1)
+    fit_errs1 = standard_errors(fit1)
+    α_err = fit_errs1[2]
+
+    #χ^2 goodness of fit
+    residuals1 = data_mat[K_c1_i, :] .- model(t_vals,fit_params1)
+    χ2_1 = sum((residuals1 ./ data_mat_err[K_c1_i, :]).^2)
+    dof1 = length(t_vals) - length(fit_params1) 
+    χ2_red1 = χ2_1/dof1
+
+    #plot
+    plt1 = plot(title=latexstring("Time evolution of $(data_type) near \$κ_c\$"),
+        xlabel="Time (kicks)", ylabel=latexstring("\$E(t, κ_c)\$"))
+    plot!(plt1, t_vals, data_mat[K_c1_i, :], marker=:o, label="κ_c=$(round(K_vals[K_c1_i], digits=3))", ms=3)
+    plot!(plt1, t_vals, model(t_vals,fit_params1), label=latexstring("\$α≈$(round(fit_params1[2], digits=3)) ± $(round(α_err, digits=3))\$"))
+    display(plt1)
+    println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[2], digits=3)) ± $(round(2*α_err/fit_params1[2]^2, digits=3))")
+    println("Estimated transient time t0 ≈ $(round(fit_params1[3], digits=3)) ± $(round(fit_errs1[3], digits=3))")
+    println("χ2 red =", χ2_red1)
 end
 
 function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
