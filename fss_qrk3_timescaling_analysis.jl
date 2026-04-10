@@ -12,7 +12,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     end
     if raw == true
         plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-            xlabel=latexstring("\$\\ln(t^{-1/d})\$"), ylabel=latexstring("\$ \\ln (Λ)\$"))
+            xlabel=latexstring("\$\\ln(N_p^{-1/d})\$"), ylabel=latexstring("\$ \\ln (Λ)\$"))
         for (i,K) in enumerate(K_vals)
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
@@ -24,7 +24,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
 
     # Plot after collapse
     plt2 = plot(title=latexstring("Data collapse $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-        xlabel=latexstring("\$\\ln(\\xi/N^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
+        xlabel=latexstring("\$\\ln(\\xi/N_p^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
     if ploterr == true
         for (i,K) in enumerate(K_vals)
             plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
@@ -407,20 +407,22 @@ function perform_tevol_ln(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_i
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
 end
 
-function perform_tevol_powerlaw(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_index=0, data_type="")
+function perform_tevol_powerlaw(dime, shifts, t_vals, data_mat, data_mat_err; transient, Kc_offset_index=0, data_type="")
     
-    K_c1_i = argmax(shifts) + Kc_offset_index
+    #filter Nkicks range
+    t_vals, data_mat, data_mat_err = filter_Nkicks(t_vals, data_mat, data_mat_err; n_kicks_i=transient, n_kicks_f=0)
 
+    K_c1_i = argmax(shifts) + Kc_offset_index
     #fit powerlaw with transient: model(t) = A * (t - t0)^α
-    model(t, p) = p[1] .* (t .- p[3]) .^ p[2]  # y = A * (t - t0)^α
-    guess1 = [1.0, 2/d, 1.0]  # Initial guess for [A, α, t0]
+    model(t, p) = p[1] .* abs.(t .- p[3]) .^ p[2]  # y = A * (t - t0)^α
+    guess1 = [1.0, 2/dime, transient]  # Initial guess for [A, α, t0]
     fit1 = curve_fit(model, t_vals, data_mat[K_c1_i, :], guess1)
     fit_params1 = coef(fit1)
     fit_errs1 = standard_errors(fit1)
     α_err = fit_errs1[2]
 
     #χ^2 goodness of fit
-    residuals1 = data_mat[K_c1_i, :] .- model(t_vals,fit_params1)
+    residuals1 = data_mat[K_c1_i, :] .- model(t_vals, fit_params1)
     χ2_1 = sum((residuals1 ./ data_mat_err[K_c1_i, :]).^2)
     dof1 = length(t_vals) - length(fit_params1) 
     χ2_red1 = χ2_1/dof1
@@ -428,8 +430,8 @@ function perform_tevol_powerlaw(d, shifts, t_vals, data_mat, data_mat_err; Kc_of
     #plot
     plt1 = plot(title=latexstring("Time evolution of $(data_type) near \$κ_c\$"),
         xlabel="Time (kicks)", ylabel=latexstring("\$E(t, κ_c)\$"))
-    plot!(plt1, t_vals, data_mat[K_c1_i, :], marker=:o, label="κ_c=$(round(K_vals[K_c1_i], digits=3))", ms=3)
-    plot!(plt1, t_vals, model(t_vals,fit_params1), label=latexstring("\$α≈$(round(fit_params1[2], digits=3)) ± $(round(α_err, digits=3))\$"))
+    plot!(plt1, t_vals, data_mat[K_c1_i, :].*1e8, marker=:o, label="κ_c=$(round(K_vals[K_c1_i], digits=3))", ms=3)
+    plot!(plt1, t_vals, model(t_vals,fit_params1).*1e8, label=latexstring("\$d≈$(round(2/fit_params1[2], digits=3)) ± $(round(2*α_err/fit_params1[2]^2, digits=3))\$"))
     display(plt1)
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[2], digits=3)) ± $(round(2*α_err/fit_params1[2]^2, digits=3))")
     println("Estimated transient time t0 ≈ $(round(fit_params1[3], digits=3)) ± $(round(fit_errs1[3], digits=3))")
