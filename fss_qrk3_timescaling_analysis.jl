@@ -344,7 +344,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
         vline!(plt1, [Kc], color=:red, linestyle=:dash, label="Kc")
         display(plt1)=#
 
-        plt2 = plot(title=latexstring("Linear fits near $data_type \$a_s=$(a_s)a_0\$"),
+        plt2 = plot(title=latexstring("Linear fits near $data_type \$a_s=$(a_s)a_0\$ \$d=$(dim)\$"),
                     xlabel=L"κ", ylabel=L"\ln{Λ(κ_c)}", legend=:topleft)
         for j in 1:N
             a, b = fit_lines[j]
@@ -359,7 +359,7 @@ function finite_time_linear_scaling(K_vals, t_vals, p2_mat, p2_err_mat, dim; dat
          
         # Fig. 14: ln|s| vs ln t
         plt3 = plot(xlabel=L"\ln{t}", ylabel=L"(\ln{Λ})'(κ_c)",
-                    title=latexstring("Scaling of slopes $data_type \$a_s=$(a_s)a_0\$"), label="data")
+                    title=latexstring("Scaling of slopes $data_type \$a_s=$(a_s)a_0\$ \$d=$(dim)\$"), label="data")
         scatter!(plt3, logt, logs; yerr=logs_err, label="data", ms=6)
         plot!(plt3, logt, logs_fit, lw=2, label="fit ν≈$(round(ν,digits=3))"*" ± "*"$(round(ν_err,digits=3))")
         
