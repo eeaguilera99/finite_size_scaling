@@ -151,11 +151,22 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
         return cost(a_full)
     end
 
-    # Initial guess
-    a0 = zeros(M-1)
+    # Initial guess (strictly positive)
+    a0 = 0.1 .* ones(M-1)
 
-    # Minimize
-    res = optimize(constrained_cost, a0, NelderMead())
+    # Lower and upper bounds
+    lower = zeros(M-1)          # enforce a_free ≥ 0
+    upper = fill(Inf, M-1)
+
+    # Constrained minimization
+    res = optimize(
+        constrained_cost,
+        lower,
+        upper,
+        a0,
+        Fminbox(NelderMead())
+    )
+
     shifts = vcat(0.0, Optim.minimizer(res))
     a_free_opt = Optim.minimizer(res)
 
