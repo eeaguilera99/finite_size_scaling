@@ -163,7 +163,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     total_points = M * N
     sX = sqrt(res.minimum / total_points)
     Xp = X .+ shifts                     # shifted X matrix
-    sX_rel = sX / (maximum(Xp) - minimum(Xp) + eps())
+    sX_rel = sX #/ (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
     return shifts, X, Y, Yerr, sX_rel
