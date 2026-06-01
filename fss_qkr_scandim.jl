@@ -3,7 +3,7 @@ include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 
 #code to loop over dimension values for best collapse
 
-d_values = 1:0.1:7
+d_vals = 1:0.5:10
 
 
 
@@ -11,7 +11,7 @@ function dim_scan(d_values)
 
     collapse_quality = Float64[]
     for dim in d_values
-        _, _, _, _, _, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=2)
+        _, _, _, _, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=dim, n_kicks_i=2)
         push!(collapse_quality, sX)
     end
     best_idx = argmin(collapse_quality)
@@ -32,7 +32,7 @@ function dim_scan(d_values)
     display(plt_quality)
 end
 
-dim_scan(collapse_quality)
+dim_scan(d_vals)
 
 #=
 # Optional: Plot best collapse curves
