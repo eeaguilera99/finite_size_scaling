@@ -237,7 +237,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
     end
     display(plt_fit1)
 
-    println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s) with offset and error bars =====")
+    println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s), κ_c_offset=$(Kc_guess_index) =====")
     println("κc1  ≈ $(round(results.Kc, digits=3))  ± $(round(results.err_Kc, digits=3))")
     println("ν1   ≈ $(round(results.ν, digits=3))   ± $(round(results.err_ν, digits=3))")
     println("A1   ≈ $(round(results.A, digits=3))   ± $(round(results.err_A, digits=3))")
