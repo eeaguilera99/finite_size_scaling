@@ -145,30 +145,28 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
         return total_var
     end
 
-    # Fix gauge: a₁ = 0
-    function constrained_cost(a_free::Vector)
-        a_full = vcat(0.0, a_free)
-        return cost(a_full)
+    function constrained_cost(u::Vector)
+
+        # Build full shift vector
+        a = vcat(u, -sum(u))
+
+        return cost(a)
     end
 
     # Initial guess (strictly positive)
-    a0 = 0.1 .* ones(M-1)
+    u0 = zeros(M-1)
 
-    # Lower and upper bounds
-    lower = zeros(M-1)          # enforce a_free ≥ 0
-    upper = fill(Inf, M-1)
 
     # Constrained minimization
     res = optimize(
         constrained_cost,
-        lower,
-        upper,
-        a0,
-        Fminbox(NelderMead())
+        u0,
+        NelderMead()
     )
 
-    shifts = vcat(0.0, Optim.minimizer(res))
-    a_free_opt = Optim.minimizer(res)
+    u_opt = Optim.minimizer(res)
+    shifts = vcat(u_opt, -sum(u_opt))
+    #a_free_opt = Optim.minimizer(res)
 
     # === Compute normalized scatter directly from res.minimum ===
     total_points = M * N
