@@ -1,5 +1,4 @@
 include("imp_data_ex.jl")
-include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 include("fss_qrk3_timescaling_analysis.jl")
 
 #code to loop over dimension values for best collapse
@@ -7,7 +6,7 @@ include("fss_qrk3_timescaling_analysis.jl")
 d_vals = 1:0.5:10
 
 
-#=
+
 function dim_scan(d_values)
 
     collapse_quality = Float64[]
@@ -33,7 +32,7 @@ function dim_scan(d_values)
     display(plt_quality)
 end
 
-dim_scan(d_vals)=#
+dim_scan(d_vals)
 
 function Kc_scan(d_values)
     Kc_values = Float64[]
@@ -50,7 +49,7 @@ function Kc_scan(d_values)
         title="Critical kick strength Kc vs dimension d", label="")
     display(plt_Kc)
 end
-Kc_scan(d_vals)
+#Kc_scan(d_vals)
 
 #=
 # Optional: Plot best collapse curves
