@@ -139,7 +139,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
                 # Get X values for points in this bin
                 xb = shiftedX[mask]
                 # Add weighted variance of X values in this bin
-                total_var += var(xb) * count(mask)
+                total_var += var(xb) #* count(mask)
             end
         end
         return total_var
@@ -155,7 +155,6 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
 
     # Initial guess (strictly positive)
     u0 = zeros(M-1)
-
 
     # Constrained minimization
     res = optimize(
