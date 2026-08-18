@@ -168,8 +168,16 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     #a_free_opt = Optim.minimizer(res)
 
     # === Compute normalized scatter directly from res.minimum ===
-    total_points = M * N
-    sX = sqrt(res.minimum / total_points)
+
+    nusedbins = 0
+    for b in 1:nbins
+        if count(bin_ids .== b) > 1
+            nusedbins += 1
+        end
+    end
+
+
+    sX = sqrt(res.minimum / nusedbins)
     Xp = X .+ shifts                     # shifted X matrix
     sX_rel = sX #/ (maximum(Xp) - minimum(Xp) + eps())
 
