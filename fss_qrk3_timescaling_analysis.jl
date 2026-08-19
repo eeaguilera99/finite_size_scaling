@@ -435,7 +435,7 @@ function perform_tevol_powerlaw(dime, shifts, t_vals, data_mat, data_mat_err; tr
     display(plt1)
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[2], digits=3)) ± $(round(2*α_err/fit_params1[2]^2, digits=3))")
     println("Estimated transient time t0 ≈ $(round(fit_params1[3], digits=3)) ± $(round(fit_errs1[3], digits=3))")
-    println("χ2 red =", χ2_red1)
+    println("χ2 red = ", χ2_red1)
 end
 
 function filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=1, n_kicks_f=0)
