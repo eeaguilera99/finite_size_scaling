@@ -114,13 +114,25 @@ for j in eachindex(tt_vals)
     # ACTUAL DATA
     Y_actual = Y_data[:, j]
 
-    valid = isfinite.(X_collapse) .&
+    #fit data
+    # Use the fitted model to calculate ln Λ
+    t = tt_vals[j]
+
+    logΛ_fit = model(
+        [K_vals'; fill(t, length(K_vals))'],
+        pbest
+    )
+
+    valid_fit = isfinite.(X_collapse) .&
+            isfinite.(logΛ_fit)
+
+    valid_data = isfinite.(X_collapse) .&
             isfinite.(Y_actual)
 
     plot!(
         plt5,
-        X_collapse[valid],
-        Y_actual[valid],
+        X_collapse[valid_fit],
+        logΛ_fit[valid_fit],#Y_actual[valid_data],
         seriestype = :scatter,
         ms = 3,
         label = ""
