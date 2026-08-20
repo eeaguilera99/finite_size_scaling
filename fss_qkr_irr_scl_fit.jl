@@ -28,8 +28,7 @@ end
 
 #Flatten
 K_fit = vec([k for k in K_vals, t in tt_vals])
-t_fit = vec([t for t in tt_vals, k in K_vals])
-X_fit = vec([X for X in X_data, K in K_vals])
+t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
