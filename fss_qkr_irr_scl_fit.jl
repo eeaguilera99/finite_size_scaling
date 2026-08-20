@@ -4,8 +4,9 @@ include("fss_qrk3_timescaling_analysis.jl")
 F01 = 1
 F10 = 1
 #F11 = 1
-dim = 3
+dim = 4
 K_c_guess = 1.2
+ν_guess = 1
 
 tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5)
 
@@ -32,7 +33,7 @@ t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1.0, 1.0, K_c_guess, 0.5, -20]#, -1, 1]  initial guesses
+p0 = [1.0, 1.0, K_c_guess, ν_guess, -20]#, -1, 1]  initial guesses
 fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 #b1, Kc, α, F00 = pbest
@@ -42,9 +43,22 @@ b1, b2, Kc, ν, F00 = pbest #, ψ, y, F11
 
 
 #quality of fit
-residuals = vec(Y_data) .- model([X'; Y'], pbest)
-χ2 = sum((residuals ./ vec(Yerr_data)).^2)
-dof = length(vec(Y_data)) - length(pbest)
+Yerr_fit = vec(Yerr_data)
+valid = isfinite.(Y_fit) .&
+        isfinite.(Yerr_fit) .&
+        (Yerr_fit .> 0)
+
+residuals = Y_fit[valid] .-
+            model(
+                [K_fit[valid]'; t_fit[valid]'],
+                pbest
+            )
+
+χ2 = sum((residuals ./ Yerr_fit[valid]).^2)
+
+dof = sum(valid) - length(pbest)
+
+χ2_red = χ2 / dof
 
 
 #=
@@ -132,12 +146,19 @@ for i in eachindex(K_vals)
         plt5,
         X_collapse[valid_data],
         Y_actual[valid_data],#logΛ_fit[valid_fit],
-        #seriestype = :scatter,
+        seriestype = :scatter,
         ms = 3,
         label = ""
     )
 end
 display(plt5)
+
+#plot localiation length ξ(k)
+plt6 = plot(title="Localization length ξ(k) \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
+plot!(plt6, K_vals, exp.(logxi), seriestype=:scatter, ms=3, label="ξ(k) data")
+plot!(plt6, Kgrid, exp.(-ν*log.(abs.(b1.*(Kgrid .- Kc) .+ b2.*(Kgrid .- Kc).^2))), lw=2, label="ξ(k) fit (ν=$(round(ν, digits=3)))")
+vline!(plt6, [Kc], lw=2, ls=:dash, color=:red, label="Kc=$(round(Kc, digits=3))")
+display(plt6)
 
 #=plot irrelevant scaling fit results
 plt6 = plot(title="Irrelevant scaling fit d=$(dim), \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"), xlims=(0,0.25))
@@ -151,11 +172,13 @@ end
 
 display(plt6)=#
 
+
+
 println("Fitted parameters with errors:")
-println("b1=$(b1)")
-println("Kc=$(Kc)")
-println("ν=$(ν)")
-println("χ2=$(χ2), χ2_red=$(χ2/dof)")
+println("b1 = $(b1)")
+println("κ_c = $(Kc)")
+println("ν = $(ν)")
+println("χ2 = $(χ2), χ2_red=$(χ2_red)")
 
 
 
