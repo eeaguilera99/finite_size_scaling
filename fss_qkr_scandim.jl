@@ -1,5 +1,4 @@
 include("imp_data_ex.jl")
-include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
 include("fss_qrk3_timescaling_analysis.jl")
 
 #code to loop over dimension values for best collapse
@@ -33,7 +32,33 @@ function dim_scan(d_values)
     display(plt_quality)
 end
 
-dim_scan(d_vals)
+#dim_scan(d_vals)
+
+function dim_scan2(d_vals)
+    collapse_quality = Float64[]
+    for dim in d_vals
+        _, _, _, _, χ, _ = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, dim, [1.0, 1.0, 1.2, 1.0, -20]; transient=transient)
+        push!(collapse_quality, χ)
+    end
+
+    best_idx = argmin(collapse_quality)
+    best_d = d_vals[best_idx]
+    best_val = collapse_quality[best_idx]
+
+    println("\n✅ Best collapse found for:")
+    println("   d_best = ", best_d)
+    println("   min_val = ", best_val)
+
+    # Plot collapse quality vs dimension
+    #plotly()
+    plt_quality = plot(d_vals, collapse_quality, lw=1, marker=:o,
+        xlabel="Dimension d", ylabel=L"\sigma^{rel}",
+        title="Quality of scaling2 collapse vs dimension d", label="")
+    scatter!(plt_quality, [best_d], [best_val], label="Best d = $(round(best_d, digits=2))", markersize=8)
+    display(plt_quality)
+end
+
+dim_scan2(d_vals)
 
 function Kc_scan(d_values)
     Kc_values = Float64[]
