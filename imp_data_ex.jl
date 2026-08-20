@@ -1,7 +1,7 @@
 include("fss_qkr3_timescaling.jl")
 using CSV, DataFrames, Plots, LaTeXStrings
 
-a_s = 775
+a_s = 220
 K_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
 #K_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/a_s.csv", DataFrame; header=false)))             # interactions
 t_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/Number_of_kicks.csv", DataFrame; header=false)))  # Times
@@ -26,10 +26,10 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 D = 3 # spatial dimension
-transient = 2
+transient = 5
 data_type = "Ex"
 shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=D, n_kicks_i=transient, n_kicks_f=0)
-#_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
+_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
 
 #include("fss_qrk3_timescaling_analysis.jl")
