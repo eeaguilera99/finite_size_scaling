@@ -12,23 +12,34 @@ tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5)
 # Model function for fitting with corrections to scaling
 function model(xy, p)
     K, t = xy[1,:], xy[2,:]
-    ΔK = K .- p[3]
+
+    b1  = p[1]
+    b2  = p[2]
+    Kc  = p[3]
+    ν   = p[4]
+    F00 = p[5]
+
+    ΔK = K .- Kc
+    χK = b1 .* ΔK .+ b2 .* ΔK.^2
     #return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
-    return p[5] .+ 
-        (p[1].* (ΔK) .+ 
-        p[2].* ΔK.^2).* (t.^ (1/(dim*p[4]))).* F01 #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
+    return F00 .+
+           F01 .* χK .* t.^(1.0 / (dim * ν)) #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
 end
 
 #Flatten
 K_fit = vec([k for k in K_vals, t in tt_vals])
 t_fit = vec([t for t in tt_vals, k in K_vals])
+X_fit = vec([X for X in X_data, K in K_vals])
+Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1, 5, K_c_guess, 0.5, -20]#, -1, 1]  initial guesses
-fit = curve_fit(model, [K_fit'; t_fit'], vec(Y_data), p0)
+p0 = [1.0, 1.0, K_c_guess, 0.5, -20]#, -1, 1]  initial guesses
+fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 #b1, Kc, α, F00 = pbest
 b1, b2, Kc, ν, F00 = pbest #, ψ, y, F11
+
+
 
 
 #quality of fit
@@ -77,11 +88,43 @@ display(plt4)=#
 
 
 #plot scaling function witouth Corrections
-plt5 = plot(title="Scaling function without corrections d=$(dim), \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
-for t in 1:Int(length(t_vals))
-    Xfit = -(1/dim).*log.(abs.((K_vals .- Kc) .* (t_vals[t].^(1/(dim*ν)))))
-    logΛ_nc = model([K_vals'; fill(t_vals[t], length(K_vals))'], pbest)
-    plot!(plt5, Xfit, logΛ_nc, seriestype=:scatter, ms=3, label="")
+
+ΔK = K_vals .- Kc
+
+χK = b1 .* ΔK .+ b2 .* ΔK.^2
+
+logxi = fill(NaN, length(K_vals))
+
+for i in eachindex(χK)
+    if abs(χK[i]) > 0
+        logxi[i] = -ν * log(abs(χK[i]))
+    end
+end
+
+
+plt5 = plot(title="Scaling without corrections \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
+for j in eachindex(tt_vals)
+
+    # Original X(t) = -ln(t^(1/d))
+    X_original = X_data[:, j]
+
+    # Horizontal shift for each K
+    X_collapse = X_original .+ logxi
+
+    # ACTUAL DATA
+    Y_actual = Y_data[:, j]
+
+    valid = isfinite.(X_collapse) .&
+            isfinite.(Y_actual)
+
+    plot!(
+        plt5,
+        X_collapse[valid],
+        Y_actual[valid],
+        seriestype = :scatter,
+        ms = 3,
+        label = ""
+    )
 end
 display(plt5)
 
