@@ -20,9 +20,10 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 # Perform collapse
-perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=false, d=D, ploterr=true, save=false)
-perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
-
+#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=false, d=D, ploterr=true, save=false)
+#perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
+V_guess = [1.0, 1.0, 1.2, 0.5, -20]
+perform_collapse2(K_vals, X_data, Y_data, shifts_data, V_guess, D, a_s)
 
 #=
 #write csv file with scaling data

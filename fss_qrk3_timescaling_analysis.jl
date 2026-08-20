@@ -86,6 +86,13 @@ function perform_collapse2(K_vals, X_data, Y_data, shifts, pbest, D, a_s,)
     plot!(plt6, Kgrid, exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2))), lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
     vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
     display(plt6)
+
+    println("Fitted parameters with errors:")
+    println("b1 = $(pbest[1])")
+    println("κ_c = $(pbest[3])")
+    println("ν = $(pbest[4])")
+    println("χ2 = $(χ2), χ2_red=$(χ2_red)")
+    
 end
 
 function filter_data(X, Y, Y_err)
