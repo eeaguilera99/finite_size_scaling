@@ -28,9 +28,14 @@ Perform finite-time scaling collapse of Anderson transition data.
 D = 3 # spatial dimension
 transient = 5
 data_type = "Ex"
-shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=D, n_kicks_i=transient, n_kicks_f=0)
-_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
+#shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=D, n_kicks_i=transient, n_kicks_f=0)
+#_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
+
+#Collapse snc method 
+V_guess = [1.0, 1.0, 1.2, 0.5, -20]
+X_data, Y_data, pbest, shifts_data, _, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, D, V_guess; transient=transient)
+perform_collapse2(K_vals, X_data, Y_data, shifts_data, pbest, D, a_s)
 
 #include("fss_qrk3_timescaling_analysis.jl")
 

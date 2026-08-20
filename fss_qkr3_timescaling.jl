@@ -178,6 +178,78 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     return shifts, X, Y, Yerr, sX_rel
 end
 
+function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transient = 2, F01 = 1, F10= 1)
+    #V_gues = [dim, b1, b2,Kc, ν, F00]
+    tt_vals, p2, p2_err = filter_Nkicks(t_vals, mat, err_mat; n_kicks_i=transient)
+    # Observable: Λ = <p^2>/t^(2/3)
+    Λ = p2 ./ (tt_vals' .^ (2.0/d))
+    Λ_err = p2_err ./ (tt_vals' .^ (2/d))
+
+    # Log variables
+    X = -log.(tt_vals' .^ (1.0/d))     # 1×N
+    Y = log.(Λ)                # M×N
+    # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
+    Yerr = Λ_err ./ Λ
+
+    # Model function for fitting with corrections to scaling
+    function model(xy, p)
+        K, t = xy[1,:], xy[2,:]
+
+        b1  = p[1]
+        b2  = p[2]
+        Kc  = p[3]
+        ν   = p[4]
+        F00 = p[5]
+
+        ΔK = K .- Kc
+        χK = b1 .* ΔK .+ b2 .* ΔK.^2
+        #return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
+        return F00 .+
+            F01 .* χK .* t.^(1.0 / (d * ν)) #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
+    end
+
+    #Flatten
+    K_fit = vec([k for k in K_vals, t in tt_vals])
+    t_fit = vec([t for t in tt_vals, k in K_vals]')
+    Y_fit = vec(Y)
+
+    # Initial parameter guesses: b1, Kc, α, F00
+    fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, V_guess)
+    pbest = coef(fit)
+    #b1, Kc, α, F00 = pbest
+    b1, b2, Kc, ν, F00 = pbest 
+
+    #quality of fit
+    Yerr_fit = vec(Yerr)
+    valid = isfinite.(Y_fit) .&
+            isfinite.(Yerr_fit) .&
+            (Yerr_fit .> 0)
+
+    residuals = Y_fit[valid] .-
+                model(
+                    [K_fit[valid]'; t_fit[valid]'],
+                    pbest
+                )
+
+    χ2 = sum((residuals ./ Yerr_fit[valid]).^2)
+
+    dof = sum(valid) - length(pbest)
+
+    χ2_red = χ2 / dof
+
+    #get ξ
+    ΔK = K_vals .- Kc
+    χK = b1 .* ΔK .+ b2 .* ΔK.^2
+    logxi = fill(NaN, length(K_vals))
+    for i in eachindex(χK)
+        if abs(χK[i]) > 0
+            logxi[i] = -ν * log(abs(χK[i]))
+        end
+    end
+
+    return X_data, Y_data, pbest, logxi, χ2, χ2_red
+end
+
 # Function to perform parametric bootstrap for shift uncertainties
 function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, nbins=100, nmc=500, rng=MersenneTwister(0))
     M, N = size(p2_mat)

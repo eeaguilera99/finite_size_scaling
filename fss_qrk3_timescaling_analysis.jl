@@ -40,6 +40,54 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     display(plt2)
 end
 
+function perform_collapse2(K_vals, X_data, Y_data, shifts, pbest, D, a_s,)
+    Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
+    plt5 = plot(title="Scaling without corrections \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
+    for i in eachindex(K_vals)
+
+        #fixed K
+        K = K_vals[i]
+
+        # Horizontal shift for each K
+        X_collapse = X_data' .+ shifts[i] 
+
+        # ACTUAL DATA
+        Y_actual = Y_data[i, :]
+
+        #fit data
+        # Use the fitted model to calculate ln Λ
+        #t = tt_vals[j]
+
+        #=logΛ_fit = model(
+            [K_vals'; fill(t, length(K_vals))'],
+            pbest
+        )
+
+        valid_fit = isfinite.(X_collapse) .&
+                isfinite.(logΛ_fit)=#
+
+        valid_data = isfinite.(X_collapse) .&
+                isfinite.(Y_actual)
+
+        plot!(
+            plt5,
+            X_collapse[valid_data],
+            Y_actual[valid_data],#logΛ_fit[valid_fit],
+            seriestype = :scatter,
+            ms = 3,
+            label = ""
+        )
+    end
+    display(plt5)
+
+    #plot localiation length ξ(k)
+    plt6 = plot(title="Localization length ξ(k) \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
+    plot!(plt6, K_vals, exp.(shifts), seriestype=:scatter, ms=3, label="ξ(k) data")
+    plot!(plt6, Kgrid, exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2))), lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
+    vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
+    display(plt6)
+end
+
 function filter_data(X, Y, Y_err)
     Xf = Float64[]
     Yf = Float64[]
