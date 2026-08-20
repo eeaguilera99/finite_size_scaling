@@ -103,37 +103,37 @@ end
 
 
 plt5 = plot(title="Scaling without corrections \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
-for j in eachindex(tt_vals)
+for i in eachindex(K_vals)
 
-    # Original X(t) = -ln(t^(1/d))
-    X_original = X_data[:, j]
+    #fixed K
+    K = K_vals[i]
 
     # Horizontal shift for each K
-    X_collapse = X_original .+ logxi
+    X_collapse = X_data' .+ logxi[i] 
 
     # ACTUAL DATA
-    Y_actual = Y_data[:, j]
+    Y_actual = Y_data[i, :]
 
     #fit data
     # Use the fitted model to calculate ln Λ
-    t = tt_vals[j]
+    #t = tt_vals[j]
 
-    logΛ_fit = model(
+    #=logΛ_fit = model(
         [K_vals'; fill(t, length(K_vals))'],
         pbest
     )
 
     valid_fit = isfinite.(X_collapse) .&
-            isfinite.(logΛ_fit)
+            isfinite.(logΛ_fit)=#
 
     valid_data = isfinite.(X_collapse) .&
             isfinite.(Y_actual)
 
     plot!(
         plt5,
-        X_collapse[valid_fit],
-        logΛ_fit[valid_fit],#Y_actual[valid_data],
-        seriestype = :scatter,
+        X_collapse[valid_data],
+        Y_actual[valid_data],#logΛ_fit[valid_fit],
+        #seriestype = :scatter,
         ms = 3,
         label = ""
     )
