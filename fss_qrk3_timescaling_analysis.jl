@@ -40,7 +40,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     display(plt2)
 end
 
-function perform_collapse2(K_vals, X_data, Y_data, shifts, pbest, D, a_s,)
+function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_red, pbest, D, a_s)
     Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
     plt5 = plot(title="Scaling without corrections \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
     for i in eachindex(K_vals)
@@ -53,6 +53,7 @@ function perform_collapse2(K_vals, X_data, Y_data, shifts, pbest, D, a_s,)
 
         # ACTUAL DATA
         Y_actual = Y_data[i, :]
+        Y_err_actual = Yerr_data[i, :]
 
         #fit data
         # Use the fitted model to calculate ln Λ
@@ -73,6 +74,7 @@ function perform_collapse2(K_vals, X_data, Y_data, shifts, pbest, D, a_s,)
             plt5,
             X_collapse[valid_data],
             Y_actual[valid_data],#logΛ_fit[valid_fit],
+            yerror=Y_err_actual[valid_data],
             seriestype = :scatter,
             ms = 3,
             label = ""

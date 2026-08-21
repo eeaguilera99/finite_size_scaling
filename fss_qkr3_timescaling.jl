@@ -247,7 +247,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
         end
     end
 
-    return X_data, Y_data, pbest, logxi, χ2, χ2_red
+    return X, Y, Yerr, pbest, logxi, χ2, χ2_red
 end
 
 # Function to perform parametric bootstrap for shift uncertainties

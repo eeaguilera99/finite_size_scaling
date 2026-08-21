@@ -34,7 +34,7 @@ data_type = "Ex"
 
 #Collapse snc method 
 V_guess = [3.0, 1.0, 1.2, 0.5, -20]
-X_data, Y_data, pbest, shifts_data, _, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, D, V_guess; transient=transient)
+X_data, Y_data, Yerr_data, pbest, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, D, V_guess; transient=transient)
 
 
 include("fss_qrk3_timescaling_analysis.jl")
@@ -42,4 +42,4 @@ include("fss_qrk3_timescaling_analysis.jl")
 #perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
-#perform_collapse2(K_vals, X_data, Y_data, shifts_data, pbest, D, a_s)
+perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, D, a_s)
