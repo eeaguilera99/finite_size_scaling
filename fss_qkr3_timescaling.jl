@@ -216,6 +216,9 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
     # Initial parameter guesses: b1, Kc, α, F00
     fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, V_guess)
     pbest = coef(fit)
+    covar = estimate_covar(fit)
+    perr  = sqrt.(diag(covar))
+
     #b1, Kc, α, F00 = pbest
     b1, b2, Kc, ν, F00 = pbest 
 
@@ -247,7 +250,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
         end
     end
 
-    return X, Y, Yerr, pbest, logxi, χ2, χ2_red
+    return X, Y, Yerr, pbest, perr, logxi, χ2, χ2_red
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
