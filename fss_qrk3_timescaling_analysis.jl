@@ -40,7 +40,7 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     display(plt2)
 end
 
-function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_red, pbest, D, a_s)
+function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_red, pbest, D, a_s; showxi=true)
     Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
     plt5 = plot(title="Scaling without corrections \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
     for i in eachindex(K_vals)
@@ -81,13 +81,15 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
         )
     end
     display(plt5)
-
-    #plot localiation length ξ(k)
-    plt6 = plot(title="Localization length ξ(k) \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
-    plot!(plt6, K_vals, exp.(shifts), seriestype=:scatter, ms=3, label="ξ(k) data")
-    plot!(plt6, Kgrid, exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2))), lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
-    vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
-    display(plt6)
+    if showxi
+        #plot localiation length ξ(k)
+        plt6 = plot(title="Localization length ξ(k) \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
+        plot!(plt6, K_vals, exp.(shifts), seriestype=:scatter, ms=3, label="ξ(k) data")
+        plot!(plt6, Kgrid, exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2))), lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
+        vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
+        display(plt6)
+    end
+    
 
     println("Fitted parameters with errors:")
     println("b1 = $(pbest[1])")
