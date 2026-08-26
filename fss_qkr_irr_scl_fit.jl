@@ -4,7 +4,7 @@ include("fss_qrk3_timescaling_analysis.jl")
 F01 = 1
 F10 = 1
 #F11 = 1
-dim = 4
+dim = 3
 K_c_guess = 1.2
 ν_guess = 1
 
@@ -15,13 +15,13 @@ function model(xy, p)
     K, t = xy[1,:], xy[2,:]
 
     b1  = p[1]
-    b2  = p[2]
-    Kc  = p[3]
-    ν   = p[4]
-    F00 = p[5]
+    #b2  = p[2]
+    Kc  = p[2]
+    ν   = p[3]
+    F00 = p[4]
 
     ΔK = K .- Kc
-    χK = b1 .* ΔK .+ b2 .* ΔK.^2
+    χK = b1 .* ΔK #.+ b2 .* ΔK.^2
     #return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
     return F00 .+
            F01 .* χK .* t.^(1.0 / (dim * ν)) #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
@@ -33,11 +33,12 @@ t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1.0, 1.0, K_c_guess, ν_guess, -20]#, -1, 1]  initial guesses
+p0 = [1.0, K_c_guess, ν_guess, -20]#, -1, 1]  initial guesses
 fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
+perr  = sqrt.(diag(estimate_covar(fit)))
 #b1, Kc, α, F00 = pbest
-b1, b2, Kc, ν, F00 = pbest #, ψ, y, F11
+b1, Kc, ν, F00 = pbest #, ψ, y, F11
 
 
 
@@ -104,7 +105,7 @@ display(plt4)=#
 
 ΔK = K_vals .- Kc
 
-χK = b1 .* ΔK .+ b2 .* ΔK.^2
+χK = b1 .* ΔK #.+ b2 .* ΔK.^2
 
 logxi = fill(NaN, length(K_vals))
 
@@ -115,7 +116,7 @@ for i in eachindex(χK)
 end
 
 
-plt5 = plot(title="Scaling without corrections \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
+plt5 = plot(title="Scaling by Taylor fit \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
 for i in eachindex(K_vals)
 
     #fixed K
@@ -126,6 +127,7 @@ for i in eachindex(K_vals)
 
     # ACTUAL DATA
     Y_actual = Y_data[i, :]
+    Y_err_actual = Yerr_data[i, :]
 
     #fit data
     # Use the fitted model to calculate ln Λ
@@ -146,6 +148,7 @@ for i in eachindex(K_vals)
         plt5,
         X_collapse[valid_data],
         Y_actual[valid_data],#logΛ_fit[valid_fit],
+        yerror=Y_err_actual[valid_data],
         seriestype = :scatter,
         ms = 3,
         label = ""
@@ -156,7 +159,7 @@ display(plt5)
 #plot localiation length ξ(k)
 plt6 = plot(title="Localization length ξ(k) \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
 plot!(plt6, K_vals, exp.(logxi), seriestype=:scatter, ms=3, label="ξ(k) data")
-plot!(plt6, Kgrid, exp.(-ν*log.(abs.(b1.*(Kgrid .- Kc) .+ b2.*(Kgrid .- Kc).^2))), lw=2, label="ξ(k) fit (ν=$(round(ν, digits=3)))")
+plot!(plt6, Kgrid, exp.(-ν*log.(abs.(b1.*(Kgrid .- Kc) .+ 0 .*(Kgrid .- Kc).^2))), lw=2, label="ξ(k) fit (ν=$(round(ν, digits=3)))")
 vline!(plt6, [Kc], lw=2, ls=:dash, color=:red, label="Kc=$(round(Kc, digits=3))")
 display(plt6)
 
@@ -175,10 +178,10 @@ display(plt6)=#
 
 
 println("Fitted parameters with errors:")
-println("b1 = $(b1)")
-println("κ_c = $(Kc)")
-println("ν = $(ν)")
-println("χ2 = $(χ2), χ2_red=$(χ2_red)")
+println("b1 = $round(b1, digits=3) ± $(round(perr[1], digits=3))")
+println("κ_c = $round(Kc, digits=3)")
+println("ν = $round(ν, digits=3)")
+println("χ2 = $round(χ2, digits=3), χ2_red=$round(χ2_red, digits=3)")
 
 
 
