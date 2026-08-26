@@ -92,10 +92,10 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
     
 
     println(" Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:")
-    println("b1 = $round(pbest[1], digits=3) ± $(round(perr[1], digits=3))")
-    println("κ_c = $round(pbest[3], digits=3) ± $(round(perr[3], digits=3))")
-    println("ν = $round(pbest[4], digits=3) ± $(round(perr[4], digits=3))")
-    println("χ2 = $round(χ2, digits=3), χ2_red=$round(χ2_red, digits=3)")
+    println("b1 = $(round(pbest[1], digits=3)) ± $(round(perr[1], digits=3))")
+    println("κ_c = $(round(pbest[3], digits=3)) ± $(round(perr[3], digits=3))")
+    println("ν = $(round(pbest[4], digits=3)) ± $(round(perr[4], digits=3))")
+    println("χ2 = $(round(χ2, digits=3)), χ2_red=$(round(χ2_red, digits=3))")
     
 end
 

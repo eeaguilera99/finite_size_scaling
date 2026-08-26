@@ -177,11 +177,11 @@ display(plt6)=#
 
 
 
-println("Fitted parameters with errors:")
-println("b1 = $round(b1, digits=3) ± $(round(perr[1], digits=3))")
-println("κ_c = $round(Kc, digits=3)")
-println("ν = $round(ν, digits=3)")
-println("χ2 = $round(χ2, digits=3), χ2_red=$round(χ2_red, digits=3)")
+println("Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:")
+println("b1 = $(round(b1, digits=3)) ± $(round(perr[1], digits=3))")
+println("κ_c = $(round(Kc, digits=3)) ± $(round(perr[2], digits=3))")
+println("ν = $(round(ν, digits=3)) ± $(round(perr[4], digits=3))")
+println("χ2 = $(round(χ2, digits=3)), χ2_red=$(round(χ2_red, digits=3))")
 
 
 
