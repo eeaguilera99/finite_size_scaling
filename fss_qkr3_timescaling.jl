@@ -178,7 +178,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     return shifts, X, Y, Yerr, sX_rel
 end
 
-function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transient = 2, F01 = 1, F10= 1)
+function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transient = 1, F01 = 1)
     #V_gues = [dim, b1, b2,Kc, ν, F00]
     tt_vals, p2, p2_err = filter_Nkicks(t_vals, mat, err_mat; n_kicks_i=transient)
     # Observable: Λ = <p^2>/t^(2/3)

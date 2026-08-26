@@ -42,7 +42,7 @@ end
 
 function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_red, pbest, perr, D, a_s; showxi=true)
     Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
-    plt5 = plot(title="Scaling without corrections \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
+    plt5 = plot(title="Scaling by Taylor fit \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"))
     for i in eachindex(K_vals)
 
         #fixed K
@@ -91,11 +91,11 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
     end
     
 
-    println("Fitted parameters with errors:")
-    println("b1 = $(pbest[1]) ± $(perr[1])")
-    println("κ_c = $(pbest[3]) ± $(perr[3])")
-    println("ν = $(pbest[4]) ± $(perr[4])")
-    println("χ2 = $(χ2), χ2_red=$(χ2_red)")
+    println(" Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:")
+    println("b1 = $round(pbest[1], digits=3) ± $(round(perr[1], digits=3))")
+    println("κ_c = $round(pbest[3], digits=3) ± $(round(perr[3], digits=3))")
+    println("ν = $round(pbest[4], digits=3) ± $(round(perr[4], digits=3))")
+    println("χ2 = $round(χ2, digits=3), χ2_red=$round(χ2_red, digits=3)")
     
 end
 
