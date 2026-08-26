@@ -85,7 +85,8 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
         #plot localiation length ξ(k)
         plt6 = plot(title="Localization length ξ(k) \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
         plot!(plt6, K_vals, exp.(shifts), seriestype=:scatter, ms=3, label="ξ(k) data")
-        plot!(plt6, Kgrid, exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2))), lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
+        ξplot =  exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2)))
+        plot!(plt6, Kgrid, ξplot, lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
         vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
         display(plt6)
     end
@@ -95,7 +96,8 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
     println("b1 = $(round(pbest[1], digits=3)) ± $(round(perr[1], digits=3))")
     println("κ_c = $(round(pbest[3], digits=3)) ± $(round(perr[3], digits=3))")
     println("ν = $(round(pbest[4], digits=3)) ± $(round(perr[4], digits=3))")
-    println("χ2 = $(round(χ2, digits=3)), χ2_red=$(round(χ2_red, digits=3))")
+    println("ξsat = $(round(pbest[6], digits=3)) ± $(round(perr[6], digits=3))")
+    println("χ2 = $(round(χ2, digits=3)), χ2_red = $(round(χ2_red, digits=3))")
     
 end
 
