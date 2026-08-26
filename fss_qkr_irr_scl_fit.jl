@@ -4,11 +4,11 @@ include("fss_qrk3_timescaling_analysis.jl")
 F01 = 1
 F10 = 1
 #F11 = 1
-dim = 3
+dim = D
 K_c_guess = 1.2
 ν_guess = 1
 
-tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=5)
+tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=transient)
 
 # Model function for fitting with corrections to scaling
 function model(xy, p)
@@ -177,7 +177,7 @@ display(plt6)=#
 
 
 
-println("Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:")
+println(latexstring("Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:"))
 println("b1 = $(round(b1, digits=3)) ± $(round(perr[1], digits=3))")
 println("κ_c = $(round(Kc, digits=3)) ± $(round(perr[2], digits=3))")
 println("ν = $(round(ν, digits=3)) ± $(round(perr[4], digits=3))")
