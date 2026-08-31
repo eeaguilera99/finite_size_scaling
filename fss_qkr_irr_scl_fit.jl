@@ -7,6 +7,7 @@ F10 = 1
 dim = D
 K_c_guess = 1.2
 ν_guess = 1
+ξsat_guess = 0.1
 
 tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=transient)
 
@@ -15,16 +16,18 @@ function model(xy, p)
     K, t = xy[1,:], xy[2,:]
 
     b1  = p[1]
-    #b2  = p[2]
-    Kc  = p[2]
-    ν   = p[3]
-    F00 = p[4]
+    b2  = p[2]
+    Kc  = p[3]
+    ν   = p[4]
+    F00 = p[5]
+    ξsat  = p[6]
 
     ΔK = K .- Kc
-    χK = b1 .* ΔK #.+ b2 .* ΔK.^2
+    χK = b1 .* ΔK .+ b2 .* ΔK.^2
     #return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
+     χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
     return F00 .+
-           F01 .* χK .* t.^(1.0 / (dim * ν)) #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
+            F01 .* χeff .* t.^(1.0/(dim*ν)) #.+ p[5].*t.^(p[6]).*(F10 .+ p[1].*(p[2].- K).*(t.^(1/p[3]))).*p[7]
 end
 
 #Flatten
@@ -33,12 +36,12 @@ t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1.0, K_c_guess, ν_guess, -20]#, -1, 1]  initial guesses
+p0 = [1.0, 1.0, K_c_guess, ν_guess, -20, 0.1]#, -1, 1]  initial guesses
 fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 perr  = sqrt.(diag(estimate_covar(fit)))
 #b1, Kc, α, F00 = pbest
-b1, Kc, ν, F00 = pbest #, ψ, y, F11
+b1, b2, Kc, ν, F00, ξsat = pbest #, ψ, y, F11
 
 
 
@@ -107,11 +110,13 @@ display(plt4)=#
 
 χK = b1 .* ΔK #.+ b2 .* ΔK.^2
 
+χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
+
 logxi = fill(NaN, length(K_vals))
 
 for i in eachindex(χK)
     if abs(χK[i]) > 0
-        logxi[i] = -ν * log(abs(χK[i]))
+        logxi[i] = -ν * log(abs(χeff[i]))
     end
 end
 
