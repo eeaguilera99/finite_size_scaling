@@ -192,26 +192,26 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
     Yerr = Λ_err ./ Λ
 
     # Model function for fitting with corrections to scaling
-function model(xy, p)
+    function model(xy, p)
 
-    K, t = xy[1,:], xy[2,:]
+        K, t = xy[1,:], xy[2,:]
 
-    b1    = p[1]
-    b2    = p[2]
-    Kc    = p[3]
-    ν     = p[4]
-    F00   = p[5]
-    ξsat  = p[6]
+        b1    = p[1]
+        b2    = p[2]
+        Kc    = p[3]
+        ν     = p[4]
+        F00   = p[5]
+        ξsat  = p[6]
 
-    ΔK = K .- Kc
+        ΔK = K .- Kc
 
-    χK = b1 .* ΔK .+ b2 .* ΔK.^2
+        χK = b1 .* ΔK .+ b2 .* ΔK.^2
 
-    χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
+        χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
 
-    return F00 .+
-           F01 .* χeff .* t.^(1.0/(d*ν))
-end
+        return F00 .+
+            F01 .* χeff .* t.^(1.0/(d*ν))
+    end
     #Flatten
     K_fit = vec([k for k in K_vals, t in tt_vals])
     t_fit = vec([t for t in tt_vals, k in K_vals]')
