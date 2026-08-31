@@ -247,10 +247,11 @@ end
     #get ξ
     ΔK = K_vals .- Kc
     χK = b1 .* ΔK .+ b2 .* ΔK.^2
+    χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
     logxi = fill(NaN, length(K_vals))
-    for i in eachindex(χK)
-        if abs(χK[i]) > 0
-            logxi[i] = -ν * log(abs(χK[i]))
+    for i in eachindex(χeff)
+        if abs(χeff[i]) > 0
+            logxi[i] = -ν * log(abs(χeff[i]))
         end
     end
 

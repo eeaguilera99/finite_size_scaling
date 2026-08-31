@@ -85,7 +85,11 @@ function perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts, χ2, χ2_r
         #plot localiation length ξ(k)
         plt6 = plot(title="Localization length ξ(k) \$d=$(D)\$, \$a_s=$(a_s)a_0\$", xlabel=latexstring("κ"), ylabel=latexstring("ξ(k)"))
         plot!(plt6, K_vals, exp.(shifts), seriestype=:scatter, ms=3, label="ξ(k) data")
-        ξplot =  exp.(-pbest[4]*log.(abs.(pbest[1].*(Kgrid .- pbest[3]) .+ pbest[2].*(Kgrid .- pbest[3]).^2)))
+        b1, b2, Kc, ν, F00, ξsat = pbest 
+        ΔK = Kgrid .- Kc
+        χK = b1 .* ΔK .+ b2 .* ΔK.^2
+        χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
+        ξplot =  exp.(-ν * log.(abs.(χeff)))
         plot!(plt6, Kgrid, ξplot, lw=2, label="ξ(k) fit (ν=$(round(pbest[4], digits=3)))")
         vline!(plt6, [pbest[3]], lw=2, ls=:dash, color=:red, label="Kc=$(round(pbest[3], digits=3))")
         display(plt6)
