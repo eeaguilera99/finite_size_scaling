@@ -1,9 +1,20 @@
-include("imp_data_ex.jl")
+include("fss_qkr3_timescaling.jl")
+include("fss_qrk3_timescaling_analysis.jl")
+using CSV, DataFrames, Plots, LaTeXStrings
 
+
+#a_s = "κ=0.87"
+a_s = 220
+K_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/kappa.csv", DataFrame; header=false)))             # Kick strengths
+#K_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/a_s.csv", DataFrame; header=false)))             # interactions
+t_vals = vec(Matrix(CSV.read("dataEX/$(a_s)/Number_of_kicks.csv", DataFrame; header=false)))  # Times
+p2_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_matrix.csv", DataFrame; header=false))   
+p2_err_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     
 #code to loop over dimension values for best collapse
 
-d_vals = 1:0.5:15
-
+d_vals = 1:0.5:10
+V_guess = [1, 1, 1.2, 0.5, -20, 0.1]
+transient = 5
 
 
 function dim_scan(d_values)
@@ -36,6 +47,7 @@ end
 function dim_scan2(d_vals)
     collapse_quality = Float64[]
     for dim in d_vals
+        X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=transient, n_kicks_f=0)
         _, _, _, _, χ = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, dim, V_guess; transient=transient)
         push!(collapse_quality, χ)
     end
@@ -48,6 +60,7 @@ function dim_scan2(d_vals)
     println("   d_best = ", best_d)
     println("   min_val = ", best_val)
     println(" $d_vals , $(round.(collapse_quality, digits=2)) ")
+    println("Initial guess = $V_guess (b1, b2, Kc, ν, F00, ξsat)")
 
     # Plot collapse quality vs dimension
     #plotly()
