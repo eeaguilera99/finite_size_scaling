@@ -99,13 +99,9 @@ function filter_K(Kk_vals, mat, err_mat; n_kkicks_i=1, n_kkicks_f=0)
     return Kk_vals, mat, err_mat
 end
 
-#Main function for finite time scaling analysis
-function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3, n_kicks_i=1, n_kicks_f=0)
-    
+function finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, n_kicks_f=0)
     #filter Nkicks range
     t, p2, p2_err = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=n_kicks_i, n_kicks_f=n_kicks_f)
-
-    M, N = size(p2)
 
     # Observable: Λ = <p^2>/t^(2/3)
     Λ = p2 ./ (t' .^ (2.0/d))
@@ -116,6 +112,13 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     Y = log.(Λ)                # M×N
     # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
     Yerr = Λ_err ./ Λ
+
+    return X, Y, Yerr
+end
+
+#Main function for finite time scaling analysis
+function finite_time_scaling(X, Y; nbins=100)
+    M, N = size(Y)
 
     # Flatten for binning
 
@@ -175,7 +178,7 @@ function finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=100, d=3,
     sX_rel = sX #/ (maximum(Xp) - minimum(Xp) + eps())
 
     # === Return everything
-    return shifts, X, Y, Yerr, sX_rel
+    return shifts, sX_rel
 end
 
 function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transient = 1, F01 = 1)
@@ -259,7 +262,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
-function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, nbins=100, nmc=500, rng=MersenneTwister(0))
+function shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i=1, nbins=100, nmc=500, rng=MersenneTwister(0))
     M, N = size(p2_mat)
     all_shifts = zeros(nmc, M)
 
@@ -270,7 +273,8 @@ function shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=3, n_kicks_i
 
         # Ensure positivity (log will be used downstream)
         p2_syn = max.(p2_syn, eps())
-        shifts_syn, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_syn, p2_err_mat; d=d, n_kicks_i=n_kicks_i, nbins=nbins)
+        X, Y, _ = finite_time_scaling_data(t_vals, p2_syn, p2_err_mat; d=d, n_kicks_i=n_kicks_i)
+        shifts_syn, _ = finite_time_scaling(X, Y; nbins=nbins)
         all_shifts[m, :] .= shifts_syn
     end
 

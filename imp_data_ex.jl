@@ -31,14 +31,17 @@ D = 9 # spatial dimension
 transient = 5
 data_type = "Ex"
 
-#Scaling variance optimizaztion
-#shifts_data, X_data, Y_data, Yerr_data, s_rel_data = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=D, n_kicks_i=transient, n_kicks_f=0)
-#_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
+#Scaling data
+X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
 
-#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
-#perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
+#Scaling variance optimizaztion
+shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
+_, shiftserr_data, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
+
+perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
+perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
 #Scaliong collapse Taylor fitting
-V_guess = [1, 1, 1.1, 1.5, -20, 0.1]
-X_data, Y_data, Yerr_data, pbest, perr, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, D, V_guess; transient=transient)
+#V_guess = [1, 1, 1.1, 1.5, -20, 0.1]
+#X_data, Y_data, Yerr_data, pbest, perr, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, D, V_guess; transient=transient)
 #perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, perr, D, a_s; showxi=true)
