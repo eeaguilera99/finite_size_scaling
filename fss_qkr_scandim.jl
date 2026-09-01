@@ -1,9 +1,8 @@
 include("imp_data_ex.jl")
-include("fss_qrk3_timescaling_analysis.jl")
 
 #code to loop over dimension values for best collapse
 
-d_vals = 1:9
+d_vals = 1:0.5:15
 
 
 
@@ -48,12 +47,13 @@ function dim_scan2(d_vals)
     println("\n✅ Best collapse found for:")
     println("   d_best = ", best_d)
     println("   min_val = ", best_val)
+    println(" $d_vals , $(round.(collapse_quality, digits=2)) ")
 
     # Plot collapse quality vs dimension
     #plotly()
     plt_quality = plot(d_vals, collapse_quality, lw=1, marker=:o,
-        xlabel="Dimension d", ylabel=L"χ2_{rel}",
-        title="Quality of scaling2 collapse vs dimension d", label="")
+        xlabel="Dimension \$d\$", ylabel=L"χ2_{rel}",
+        title="Quality of scaling2 collapse \$vs\$ dimension \$d\$", label="")
     scatter!(plt_quality, [best_d], [best_val], label="Best d = $(round(best_d, digits=2))", markersize=8)
     display(plt_quality)
 end
@@ -63,8 +63,8 @@ dim_scan2(d_vals)
 function Kc_scan(d_values)
     Kc_values = Float64[]
     for dim in d_values
-        shifts, _, _, _, _ = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=dim, n_kicks_i=2)
-        _, shiftserr, _ = shifts_parametric_mc(K_vals, t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)
+        shifts, _ = finite_time_scaling(X_data, Y_data; nbins=50, d=dim, n_kicks_i=transient)
+        _, shiftserr, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=dim, nbins=30, nmc=1000)
         Kc = perform_Kc_anal(shifts, shiftserr, K_vals; data_type="Ex", d=dim, n_k_filter=0, K_guess_index=0, show_xierr=false, save=false)[4]
         push!(Kc_values, Kc)
     end
