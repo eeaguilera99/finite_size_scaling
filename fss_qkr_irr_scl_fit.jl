@@ -36,7 +36,7 @@ t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1.0, 1.0, K_c_guess, ν_guess, -20, 0.1]#, -1, 1]  initial guesses
+p0 = [1.0, 1.0, K_c_guess, ν_guess, -20, 1]#, -1, 1]  initial guesses
 fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 perr  = sqrt.(diag(estimate_covar(fit)))

@@ -11,7 +11,7 @@ function dim_scan(d_values)
 
     collapse_quality = Float64[]
     for dim in d_values
-        _, _, _, _, sX = finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=50, d=dim, n_kicks_i=transient)
+        _, sX = finite_time_scaling(X_data, Y_data; nbins=50, d=dim, n_kicks_i=transient)
         push!(collapse_quality, sX)
     end
     best_idx = argmin(collapse_quality)
@@ -37,7 +37,7 @@ end
 function dim_scan2(d_vals)
     collapse_quality = Float64[]
     for dim in d_vals
-        _, _, _, _, _, _, _, χ = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, dim, [1, 1, 1.1, 0.5, -20, 0.1]; transient=transient)
+        _, _, _, _, χ = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, dim, V_guess; transient=transient)
         push!(collapse_quality, χ)
     end
 

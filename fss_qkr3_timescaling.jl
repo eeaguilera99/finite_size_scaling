@@ -181,18 +181,9 @@ function finite_time_scaling(X, Y; nbins=100)
     return shifts, sX_rel
 end
 
-function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transient = 1, F01 = 1)
+function finite_time_scaling2(K_vals, t_vals, mat, err_mat, X, Y, Yerr, d, V_guess; transient = 1, F01 = 1)
     #V_gues = [dim, b1, b2,Kc, ν, F00]
-    tt_vals, p2, p2_err = filter_Nkicks(t_vals, mat, err_mat; n_kicks_i=transient)
-    # Observable: Λ = <p^2>/t^(2/3)
-    Λ = p2 ./ (tt_vals' .^ (2.0/d))
-    Λ_err = p2_err ./ (tt_vals' .^ (2/d))
-
-    # Log variables
-    X = -log.(tt_vals' .^ (1.0/d))     # 1×N
-    Y = log.(Λ)                # M×N
-    # Propagate errors: Δ(ln Λ) ≈ ΔΛ / Λ
-    Yerr = Λ_err ./ Λ
+    tt_vals, _, _ = filter_Nkicks(t_vals, mat, err_mat; n_kicks_i=transient)
 
     # Model function for fitting with corrections to scaling
     function model(xy, p)
@@ -258,7 +249,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, d, V_guess; transien
         end
     end
 
-    return X, Y, Yerr, pbest, perr, logxi, χ2, χ2_red
+    return pbest, perr, logxi, χ2, χ2_red
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
