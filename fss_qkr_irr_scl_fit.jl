@@ -16,14 +16,14 @@ function model(xy, p)
     K, t = xy[1,:], xy[2,:]
 
     b1  = p[1]
-    b2  = p[2]
-    Kc  = p[3]
-    ν   = p[4]
-    F00 = p[5]
-    ξsat  = p[6]
+    Kc  = p[2]
+    ν   = p[3]
+    F00 = p[4]
+    ξsat  = p[5]
+    #b2  = p[6]
 
     ΔK = K .- Kc
-    χK = b1 .* ΔK .+ b2 .* ΔK.^2
+    χK = b1 .* ΔK #.+ b2 .* ΔK.^2
     #return p[4] .+ (p[1].*((K .- p[2]))).*(t.^(1/(p[3]))).*F01
      χeff = sign.(χK) .* (abs.(χK).^ν .+ 1.0/ξsat).^(1.0/ν)
     return F00 .+
@@ -41,7 +41,7 @@ fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 perr  = sqrt.(diag(estimate_covar(fit)))
 #b1, Kc, α, F00 = pbest
-b1, b2, Kc, ν, F00, ξsat = pbest #, ψ, y, F11
+b1, Kc, ν, F00, ξsat = pbest #, b2, ψ, y, F11
 
 
 
@@ -65,6 +65,8 @@ dof = sum(valid) - length(pbest)
 χ2_red = χ2 / dof
 
 
+
+Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 #=
 #plot raw data
 plt1 = plot(title="Scaling funct vs K", xlabel = "κ", ylabel = "lnΛ")
@@ -73,8 +75,6 @@ for t in 1:Int(length(t_vals))
 end
 display(plt1)=#
 
-
-Kgrid = range(minimum(K_vals), maximum(K_vals), length=400)
 #=
 #plot fit
 plt2 = plot(title="Irelevant scaling fit d=$(dim)", xlabel = "κ", ylabel = "lnΛ")
