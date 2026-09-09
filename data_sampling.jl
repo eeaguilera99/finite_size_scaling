@@ -88,41 +88,28 @@ function finite_time_scaling_sampling(
     t_vals,
     p2_mat,
     p2_err_mat;
-    d=3,
-    n_kicks_i=1,
-    n_kicks_f=0,
-    nbins=30,
-
-    # Critical point
     critic_estimate=true,
     Kc_input=nothing,
-
-    # Sampling
     ΔK=0.02,
-    n_new=10,
-
-    # Monte Carlo
-    nmc=500,
-    rng=MersenneTwister(1234))
+    N_new=10,
+    rng=Random.default_rng()
+)
 
     # --------------------------------------------------------
-    # 1. Calculate X,Y,Yerr from the original data
+    # Calculate X and Y from the experimental data
     # --------------------------------------------------------
-    X, Y, Yerr = finite_time_scaling_data(
+    X, Y, Y_err = finite_time_scaling_data(
         t_vals,
         p2_mat,
-        p2_err_mat;
-        d=d,
-        n_kicks_i=n_kicks_i,
-        n_kicks_f=n_kicks_f
+        p2_err_mat
     )
 
     # --------------------------------------------------------
-    # 2. Estimate Kc, or use supplied value
+    # Estimate Kc or use supplied Kc
     # --------------------------------------------------------
     if critic_estimate
 
-        Kc_est, slopes = estimate_Kc_from_slopes(
+        Kc = estimate_Kc(
             K_vals,
             X,
             Y
@@ -131,81 +118,112 @@ function finite_time_scaling_sampling(
     else
 
         if Kc_input === nothing
-            error("Kc_input must be supplied when critic_estimate=false")
+            error("Kc_input must be provided when critic_estimate=false")
         end
 
-        Kc_est = Kc_input
-
-        # Still calculate slopes for diagnostics
-        _, slopes = estimate_Kc_from_slopes(
-            K_vals,
-            X,
-            Y
-        )
+        Kc = Kc_input
     end
 
     # --------------------------------------------------------
-    # 3. Generate the additional K values
+    # Generate new K values around Kc
     # --------------------------------------------------------
-    K_new = generate_sampling_K(
-        Kc_est,
-        ΔK,
-        n_new,
-        minimum(K_vals),
-        maximum(K_vals)
+    K_new = generate_sampling_K(Kc, ΔK, N_new, minimum(K_vals), maximum(K_vals))
+
+    # Keep only K values inside the experimental range
+    valid = (
+        (K_new .>= minimum(K_vals)) .&
+        (K_new .<= maximum(K_vals))
     )
 
-    n_actual = length(K_new)
+    K_new = K_new[valid]
 
-    if n_actual == 0
-        error("No new K values were generated. Check Kc, ΔK and the K range.")
+    N_actual = length(K_new)
+
+    if N_actual == 0
+        error("No new K values fall inside the existing K range.")
     end
 
     # --------------------------------------------------------
-    # 4. Obtain the original collapse
-    # --------------------------------------------------------
-    shifts, sX_rel_original = finite_time_scaling(
-        X,
-        Y;
-        nbins=nbins
-    )
-
-    # --------------------------------------------------------
-    # 5. Build empirical master curve
+    # Existing collapse
     #
-    #    Xshift = X + shift
-    #    Y      = log(Λ)
+    # Used ONLY to obtain the existing horizontal shifts,
+    # which are needed to construct the synthetic master curve.
     # --------------------------------------------------------
-    Xshift = X .+ shifts
+    shifts, _ = finite_time_scaling(X, Y)
 
-    x_master = vec(Xshift)
+    # --------------------------------------------------------
+    # Shift as a function of K
+    # --------------------------------------------------------
+    order = sortperm(K_vals)
+
+    K_sorted = K_vals[order]
+    shifts_sorted = shifts[order]
+
+    function shift_from_K(K)
+
+        K_clamped = clamp(
+            K,
+            minimum(K_sorted),
+            maximum(K_sorted)
+        )
+
+        j = searchsortedlast(
+            K_sorted,
+            K_clamped
+        )
+
+        if j <= 1
+            return shifts_sorted[1]
+
+        elseif j >= length(K_sorted)
+            return shifts_sorted[end]
+        end
+
+        K1 = K_sorted[j]
+        K2 = K_sorted[j+1]
+
+        a1 = shifts_sorted[j]
+        a2 = shifts_sorted[j+1]
+
+        α = (K_clamped - K1) / (K2 - K1)
+
+        return (1 - α) * a1 + α * a2
+    end
+
+    # --------------------------------------------------------
+    # Construct empirical master curve
+    # --------------------------------------------------------
+    X_shifted = X .+ shifts .* ones(1, length(t_vals))
+
+    x_master = vec(X_shifted)
     y_master = vec(Y)
-    err_master = vec(Yerr)
+    err_master = vec(Y_err)
 
-    # Sort according to shifted X
-    order = sortperm(x_master)
+    order_master = sortperm(x_master)
 
-    x_master = x_master[order]
-    y_master = y_master[order]
-    err_master = err_master[order]
+    x_master = x_master[order_master]
+    y_master = y_master[order_master]
+    err_master = err_master[order_master]
 
     # --------------------------------------------------------
-    # 6. Interpolation function for the empirical master curve
+    # Master curve interpolation
     # --------------------------------------------------------
     function master_curve(x)
 
-        # Keep interpolation inside the experimentally sampled range
         x_clamped = clamp(
             x,
             minimum(x_master),
             maximum(x_master)
         )
 
-        # Locate neighboring points
-        j = searchsortedlast(x_master, x_clamped)
+        j = searchsortedlast(
+            x_master,
+            x_clamped
+        )
 
         if j <= 1
             return y_master[1], err_master[1]
+
         elseif j >= length(x_master)
             return y_master[end], err_master[end]
         end
@@ -221,163 +239,147 @@ function finite_time_scaling_sampling(
 
         α = (x_clamped - x1) / (x2 - x1)
 
-        y_interp = (1-α)*y1 + α*y2
-        e_interp = (1-α)*e1 + α*e2
+        y = (1 - α) * y1 + α * y2
+        e = (1 - α) * e1 + α * e2
 
-        return y_interp, e_interp
+        return y, e
     end
 
     # --------------------------------------------------------
-    # 7. Estimate shift for each new K
-    #
-    #    We interpolate shift(K) from the existing data.
+    # Generate new synthetic data
     # --------------------------------------------------------
-    shift_order = sortperm(K_vals)
+    p2_new = zeros(N_actual, length(t_vals))
+    p2_err_new = zeros(N_actual, length(t_vals))
 
-    K_sorted = K_vals[shift_order]
-    shift_sorted = shifts[shift_order]
+    for i in 1:N_actual
 
-    function shift_from_K(K)
+        K = K_new[i]
 
-        K_clamped = clamp(
-            K,
-            minimum(K_sorted),
-            maximum(K_sorted)
+        # Shift corresponding to this K
+        aK = shift_from_K(K)
+
+        for j in eachindex(t_vals)
+
+            # Scaling coordinate
+            x = X[1, j] + aK
+
+            # Synthetic master-curve value
+            Y_mean, Y_error = master_curve(x)
+
+            # Convert back from log(Λ)
+            Λ_mean = exp(Y_mean)
+
+            # Convert Λ back to <p²>
+            p2_mean = Λ_mean * t_vals[j]^(2/3)
+
+            # Typical relative experimental uncertainty
+            relative_error = median(Y_err[:, j])
+
+            σp2 = p2_mean * relative_error
+
+            # Statistical realization
+            p2_new[i, j] =
+                max(
+                    p2_mean + randn(rng) * σp2,
+                    eps()
+                )
+
+            p2_err_new[i, j] = σp2
+        end
+    end
+
+    # --------------------------------------------------------
+    # Return ONLY the new data
+    # --------------------------------------------------------
+    return K_new, p2_new, p2_err_new
+end
+
+#Monte-Carlo sampling to estimate the quality of collapse: if repeated N_mc times, what is the mean and std of sX_rel?
+function monte_carlo_sampling(
+    K_vals,
+    t_vals,
+    p2_mat,
+    p2_err_mat;
+    critic_estimate=true,
+    Kc_input=nothing,
+    ΔK=0.02,
+    N_new=10,
+    N_mc=500,
+    rng=MersenneTwister(1234)
+)
+
+    # Store sX_rel from each realization
+    sX_rel_values = zeros(N_mc)
+
+    # --------------------------------------------------------
+    # Repeat the experiment N_mc times
+    # --------------------------------------------------------
+    for mc in 1:N_mc
+
+        # Generate a new statistical realization
+        K_new, p2_new, p2_err_new =
+            finite_time_scaling_sampling(
+                K_vals,
+                t_vals,
+                p2_mat,
+                p2_err_mat;
+                critic_estimate=critic_estimate,
+                Kc_input=Kc_input,
+                ΔK=ΔK,
+                N_new=N_new,
+                rng=rng
+            )
+
+        # ----------------------------------------------------
+        # Add the new curves to the experimental data
+        # ----------------------------------------------------
+        K_total = vcat(
+            K_vals,
+            K_new
         )
 
-        j = searchsortedlast(K_sorted, K_clamped)
-
-        if j <= 1
-            return shift_sorted[1]
-        elseif j >= length(K_sorted)
-            return shift_sorted[end]
-        end
-
-        K1 = K_sorted[j]
-        K2 = K_sorted[j+1]
-
-        a1 = shift_sorted[j]
-        a2 = shift_sorted[j+1]
-
-        α = (K_clamped - K1) / (K2 - K1)
-
-        return (1-α)*a1 + α*a2
-    end
-
-    # --------------------------------------------------------
-    # 8. Generate ONE synthetic dataset
-    # --------------------------------------------------------
-    function generate_synthetic_dataset()
-
-        p2_new = zeros(n_actual, length(t_vals))
-        p2err_new = zeros(n_actual, length(t_vals))
-
-        for i in 1:n_actual
-
-            K = K_new[i]
-            aK = shift_from_K(K)
-
-            for j in eachindex(t_vals)
-
-                # Original X coordinate:
-                # X = -log(t)/d
-                x = X[1,j] + aK
-
-                # Empirical master curve
-                y_mean, yerr = master_curve(x)
-
-                # Λ = exp(Y)
-                Λ_mean = exp(y_mean)
-
-                # Convert back to <p²>
-                p2_mean = Λ_mean * t_vals[j]^(2.0/d)
-
-                # Relative error in p².
-                #
-                # We use a typical relative experimental error
-                # from the existing data at this time.
-                relerr_existing =
-                    median(Yerr[:,j])
-
-                σp2 = p2_mean * relerr_existing
-
-                # Gaussian experimental noise
-                p2_sample =
-                    p2_mean + randn(rng) * σp2
-
-                # Protect logarithm downstream
-                p2_new[i,j] = max(p2_sample, eps())
-
-                p2err_new[i,j] = σp2
-            end
-        end
-
-        return p2_new, p2err_new #new generated datasets
-    end
-
-    # --------------------------------------------------------
-    # 9. Monte-Carlo sampling of collapse quality
-    # --------------------------------------------------------
-    sX_rel_mc = zeros(nmc)
-
-    for mc in 1:nmc
-
-        p2_new, p2err_new =
-            generate_synthetic_dataset()
-
-        # Add synthetic curves to experimental data
-        K_combined = vcat(K_vals, K_new)
-
-        p2_combined = vcat(
+        p2_total = vcat(
             p2_mat,
             p2_new
         )
 
-        p2err_combined = vcat(
+        p2_err_total = vcat(
             p2_err_mat,
-            p2err_new
+            p2_err_new
         )
 
-        # Recalculate X,Y using exactly the same
-        # finite-time-scaling preprocessing
-        X_combined, Y_combined, _ =
+        # ----------------------------------------------------
+        # Your existing preprocessing
+        # ----------------------------------------------------
+        X_total, Y_total, Y_err_total =
             finite_time_scaling_data(
                 t_vals,
-                p2_combined,
-                p2err_combined;
-                d=d,
-                n_kicks_i=n_kicks_i,
-                n_kicks_f=n_kicks_f
+                p2_total,
+                p2_err_total
             )
 
-        # Perform the actual collapse
-        _, sX_rel =
+        # ----------------------------------------------------
+        # Your existing collapse
+        # ----------------------------------------------------
+        shifts, sX_rel =
             finite_time_scaling(
-                X_combined,
-                Y_combined;
-                nbins=nbins
+                X_total,
+                Y_total
             )
-    
-        sX_rel_mc[mc] = sX_rel
+
+        # Store collapse quality
+        sX_rel_values[mc] = sX_rel
     end
 
     # --------------------------------------------------------
-    # 10. Statistics of collapse quality
+    # Monte-Carlo statistics
     # --------------------------------------------------------
-    sX_rel_mean = mean(sX_rel_mc)
-    sX_rel_std  = std(sX_rel_mc)
+    sX_rel_mean = mean(sX_rel_values)
+    sX_rel_std = std(sX_rel_values)
 
     return (
-        Kc_est = Kc_est,
-        K_new = K_new,
-
-        original_sX_rel = sX_rel_original,
-
-        sX_rel_mc = sX_rel_mc,
+        sX_rel_values = sX_rel_values,
         sX_rel_mean = sX_rel_mean,
-        sX_rel_std = sX_rel_std,
-
-        slopes = slopes,
-        shifts = shifts
+        sX_rel_std = sX_rel_std
     )
 end

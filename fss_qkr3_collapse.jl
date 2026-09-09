@@ -1,6 +1,6 @@
-#@time include("imp_data_ex.jl")
-include("fss_qkr3_timescaling.jl")
-include("fss_qrk3_timescaling_analysis.jl")
+include("imp_data_ex.jl")
+include("data_sampling.jl")
+
 
 """
     finite_time_scaling(K_vals, t_vals, p2_mat, p2_err_mat; nbins=30)
@@ -19,11 +19,36 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
-# Perform collapse
-#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type="Ex nc^-2", raw=false, d=D, ploterr=true, save=false)
+D = 3  # spatial dimension
+transient = 1
+data_type = "Ex"
+
+#sampling data
+K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.2, N_new=10)
+
+#Scaling data
+X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
+X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals, p2_sampled, p2_err_sampled; d=D, n_kicks_i=transient, n_kicks_f=0)
+
+
+#Scaling variance optimizaztion
+shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
+#_, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
+
+#collapse
+perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
-V_guess = [1.0, 1.0, 1.2, 0.5, -20]
-perform_collapse2(K_vals, X_data, Y_data, shifts_data, V_guess, D, a_s)
+
+#sampled collapse
+shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
+perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex_sampled", raw=false, d=D, save=false)
+
+
+#Scalling collapse Taylor fitting
+#V_guess = [1, 0.1, 0.8, 1, -20, 10] #(b1, b2, Kc, ν, F00, ξsat)
+#pbest, perr, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, D, V_guess; transient=transient)
+#perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, perr, D, a_s; showxi=true)
+
 
 #=
 #write csv file with scaling data
