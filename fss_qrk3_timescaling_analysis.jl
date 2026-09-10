@@ -286,12 +286,12 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
     if show_xierr == true 
         plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
                         xlabel=L"κ", ylabel=L"ξ(κ)", yerror=xierr,
-                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                        title=latexstring("$data_type, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
                         label="data")
     else
         plt_fit1 = plot(K_vals, xi, seriestype=:scatter, ms=6,
                         xlabel=L"κ", ylabel=L"ξ(κ)",
-                        title=latexstring("\$$data_type\$, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
+                        title=latexstring("$data_type, \$κ_c≈ $(round(results.Kc,digits=3))\$, \$d=$(d)\$"),
                         label="data")
     end
     ξfit1 = (1)./(results.β0 .+ results.A .* abs.(Kgrid .- results.Kc).^(abs(results.ν)))
