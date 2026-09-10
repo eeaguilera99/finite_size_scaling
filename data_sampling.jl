@@ -109,7 +109,7 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
     if critic_estimate
 
-        Kc = estimate_Kc(
+        Kc = estimate_Kc_from_slopes(
             K_vals,
             X,
             Y
@@ -289,9 +289,40 @@ function finite_time_scaling_sampling(
     end
 
     # --------------------------------------------------------
-    # Return ONLY the new data
+    # Combine old and new data
     # --------------------------------------------------------
-    return K_new, p2_new, p2_err_new
+
+    K_total = vcat(K_vals, K_new)
+
+    p2_total = vcat(
+        p2_mat,
+        p2_new
+    )
+
+    p2_err_total = vcat(
+        p2_err_mat,
+        p2_err_new
+    )
+
+
+    # --------------------------------------------------------
+    # Sort everything according to increasing K
+    # --------------------------------------------------------
+
+    order = sortperm(K_total)
+
+    K_total = K_total[order]
+
+    p2_total = p2_total[order, :]
+
+    p2_err_total = p2_err_total[order, :]
+
+
+    # --------------------------------------------------------
+    # Return complete dataset
+    # --------------------------------------------------------
+
+    return K_total, p2_total, p2_err_total
 end
 
 #Monte-Carlo sampling to estimate the quality of collapse: if repeated N_mc times, what is the mean and std of sX_rel?

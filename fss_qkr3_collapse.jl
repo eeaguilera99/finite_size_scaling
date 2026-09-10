@@ -20,11 +20,11 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 D = 3  # spatial dimension
-transient = 1
+transient = 5
 data_type = "Ex"
 
 #sampling data
-K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.2, N_new=10)
+K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.1, N_new=10)
 
 #Scaling data
 X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
@@ -36,12 +36,12 @@ shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
 #_, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
 #collapse
-perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
+perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=true, d=D, save=false)
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
 #sampled collapse
 shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
-perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex_sampled", raw=false, d=D, save=false)
+perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex_sampled", raw=true, d=D, save=false)
 
 
 #Scalling collapse Taylor fitting
