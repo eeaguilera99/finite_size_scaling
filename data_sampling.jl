@@ -129,14 +129,6 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
     K_new = generate_sampling_K(Kc, ΔK, N_new, minimum(K_vals), maximum(K_vals))
 
-    # Keep only K values inside the experimental range
-    valid = (
-        (K_new .>= minimum(K_vals)) .&
-        (K_new .<= maximum(K_vals))
-    )
-
-    K_new = K_new[valid]
-
     N_actual = length(K_new)
 
     if N_actual == 0
