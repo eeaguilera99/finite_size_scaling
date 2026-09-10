@@ -1,4 +1,5 @@
 include("imp_data_ex.jl")
+using Interpolations
 # ============================================================
 # Estimate approximate Kc from the temporal slope of Y
 # ============================================================
@@ -151,37 +152,19 @@ function finite_time_scaling_sampling(
     K_sorted = K_vals[order]
     shifts_sorted = shifts[order]
 
-    function shift_from_K(K)
-
-        K_clamped = clamp(
-            K,
-            minimum(K_sorted),
-            maximum(K_sorted)
-        )
-
-        j = searchsortedlast(
+   # Shape-preserving cubic interpolation
+    shift_itp = extrapolate(
+        interpolate(
             K_sorted,
-            K_clamped
-        )
+            shifts_sorted,
+            SteffenMonotonicInterpolation()
+        ),
+        Flat()
+    )
 
-        if j <= 1
-            return shifts_sorted[1]
-
-        elseif j >= length(K_sorted)
-            return shifts_sorted[end]
-        end
-
-        K1 = K_sorted[j]
-        K2 = K_sorted[j+1]
-
-        a1 = shifts_sorted[j]
-        a2 = shifts_sorted[j+1]
-
-        α = (K_clamped - K1) / (K2 - K1)
-
-        return (1 - α) * a1 + α * a2
+    function shift_from_K(K)
+        return shift_itp(K)
     end
-
     # --------------------------------------------------------
     # Construct empirical master curve
     # --------------------------------------------------------
