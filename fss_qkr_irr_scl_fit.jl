@@ -1,12 +1,11 @@
 include("imp_data_ex.jl")
-include("fss_qrk3_timescaling_analysis.jl")
 
 F01 = 1
 F10 = 1
 #F11 = 1
 dim = D
-K_c_guess = 1.2
-ν_guess = 1
+K_c_guess = 1
+ν_guess = 1.5
 ξsat_guess = 0.1
 
 tt_vals, _, _ = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=transient)
@@ -36,7 +35,7 @@ t_fit = vec([t for t in tt_vals, k in K_vals]')
 Y_fit = vec(Y_data)
 
 # Initial parameter guesses: b1, Kc, α, F00, ψ, y, F11
-p0 = [1.0, 1.0, K_c_guess, ν_guess, -20, 1]#, -1, 1]  initial guesses
+p0 = [1.0, K_c_guess, ν_guess, -20.0, ξsat_guess]#, -1, 1]  initial guesses
 fit = curve_fit(model, [K_fit'; t_fit'], Y_fit, p0)
 pbest = coef(fit)
 perr  = sqrt.(diag(estimate_covar(fit)))
@@ -166,7 +165,7 @@ plt6 = plot(title="Localization length ξ(k) \$d=$(dim)\$, \$a_s=$(a_s)a_0\$", x
 plot!(plt6, K_vals, exp.(logxi), seriestype=:scatter, ms=3, label="ξ(k) data")
 plot!(plt6, Kgrid, exp.(-ν*log.(abs.(b1.*(Kgrid .- Kc) .+ 0 .*(Kgrid .- Kc).^2))), lw=2, label="ξ(k) fit (ν=$(round(ν, digits=3)))")
 vline!(plt6, [Kc], lw=2, ls=:dash, color=:red, label="Kc=$(round(Kc, digits=3))")
-display(plt6)
+#display(plt6)
 
 #=plot irrelevant scaling fit results
 plt6 = plot(title="Irrelevant scaling fit d=$(dim), \$a_s=$(a_s)a_0\$", xlabel=latexstring("ln \$(ξ/t^{1/d})\$"), ylabel=latexstring("ln \$(Λ)\$"), xlims=(0,0.25))
@@ -184,10 +183,10 @@ display(plt6)=#
 
 println(latexstring("Collapse \$d=$(D)\$, \$a_s=$(a_s)a_0\$ fitted parameters with errors:"))
 println("b1 = $(round(b1, digits=3)) ± $(round(perr[1], digits=3))")
-println("b2 = $(round(b2, digits=3)) ± $(round(perr[2], digits=3))")
-println("κ_c = $(round(Kc, digits=3)) ± $(round(perr[3], digits=3))")
-println("ν = $(round(ν, digits=3)) ± $(round(perr[4], digits=3))")
-println("ξ_sat = $(round(ξsat, digits=3)) ± $(round(perr[6], digits=3))")
+println("κ_c = $(round(Kc, digits=3)) ± $(round(perr[2], digits=3))")
+println("ν = $(round(ν, digits=3)) ± $(round(perr[3], digits=3))")
+println("ξ_sat = $(round(ξsat, digits=3)) ± $(round(perr[5], digits=3))")
+#println("b2 = $(round(b2, digits=3)) ± $(round(perr[2], digits=3))")
 println("χ2 = $(round(χ2, digits=3)), χ2_red = $(round(χ2_red, digits=3))")
 
 

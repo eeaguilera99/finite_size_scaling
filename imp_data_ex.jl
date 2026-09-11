@@ -26,7 +26,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `shifts::Vector`: Optimal horizontal shifts aᵢ = ln ξ(Kᵢ).
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
-#=
+
 D = 3  # spatial dimension
 transient = 1
 data_type = "Ex"
@@ -42,7 +42,6 @@ X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat;
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
 #Scaliong collapse Taylor fitting
-V_guess = [1, 0.1, 0.8, 1, -20, 10] #(b1, b2, Kc, ν, F00, ξsat)
-pbest, perr, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, D, V_guess; transient=transient)
-perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, perr, D, a_s; showxi=true)
-=#
+#V_guess = [1, 0.1, 0.8, 1, -20, 10] #(b1, b2, Kc, ν, F00, ξsat)
+#pbest, perr, shifts_data, χ2, χ2_red = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, D, V_guess; transient=transient)
+#perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, perr, D, a_s; showxi=true)
