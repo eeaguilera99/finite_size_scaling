@@ -1,5 +1,7 @@
-include("imp_data_ex.jl")
+include("fss_qkr3_timescaling.jl")
+include("fss_qrk3_timescaling_analysis.jl")
 using Interpolations
+
 # ============================================================
 # Estimate approximate Kc from the temporal slope of Y
 # ============================================================
@@ -110,7 +112,7 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
     if critic_estimate
 
-        Kc = estimate_Kc_from_slopes(
+        Kc, _ = estimate_Kc_from_slopes(
             K_vals,
             X,
             Y
@@ -142,7 +144,7 @@ function finite_time_scaling_sampling(
     # Used ONLY to obtain the existing horizontal shifts,
     # which are needed to construct the synthetic master curve.
     # --------------------------------------------------------
-    shifts, _ = finite_time_scaling(X, Y)
+    shifts, _ = finite_time_scaling(X, Y, nbins=30)
 
     # --------------------------------------------------------
     # Shift as a function of K
@@ -159,66 +161,100 @@ function finite_time_scaling_sampling(
             shifts_sorted,
             SteffenMonotonicInterpolation()
         ),
-        Flat()
+        Interpolations.Flat()
     )
 
     function shift_from_K(K)
         return shift_itp(K)
     end
-    # --------------------------------------------------------
-    # Construct empirical master curve
-    # --------------------------------------------------------
-    X_shifted = X .+ shifts .* ones(1, length(t_vals))
+    
+    function build_master_curve(X, Y, shifts; nbins=30, min_bin_points=2)
 
-    x_master = vec(X_shifted)
-    y_master = vec(Y)
-    err_master = vec(Y_err)
+        M, N = size(Y)
 
-    order_master = sortperm(x_master)
+        # --------------------------------------------------------
+        # Shift all original curves according to the FSS result
+        # --------------------------------------------------------
 
-    x_master = x_master[order_master]
-    y_master = y_master[order_master]
-    err_master = err_master[order_master]
+        X_shifted = X .+ shifts .* ones(1, N)
 
-    # --------------------------------------------------------
-    # Master curve interpolation
-    # --------------------------------------------------------
-    function master_curve(x)
+        x_raw = vec(X_shifted)
+        y_raw = vec(Y)
 
-        x_clamped = clamp(
-            x,
-            minimum(x_master),
-            maximum(x_master)
-        )
+        # --------------------------------------------------------
+        # Divide the shifted X axis into bins
+        # --------------------------------------------------------
 
-        j = searchsortedlast(
-            x_master,
-            x_clamped
-        )
+        x_min = minimum(x_raw)
+        x_max = maximum(x_raw)
 
-        if j <= 1
-            return y_master[1], err_master[1]
+        bin_edges = range(x_min, x_max; length=nbins + 1)
 
-        elseif j >= length(x_master)
-            return y_master[end], err_master[end]
+        x_bin = Float64[]
+        y_bin = Float64[]
+
+        # --------------------------------------------------------
+        # Average the collapsed points inside each X bin
+        # --------------------------------------------------------
+
+        for b in 1:nbins
+
+            if b < nbins
+                mask = (x_raw .>= bin_edges[b]) .&
+                    (x_raw .<  bin_edges[b+1])
+            else
+                # Include right endpoint in last bin
+                mask = (x_raw .>= bin_edges[b]) .&
+                    (x_raw .<= bin_edges[b+1])
+            end
+
+            if count(mask) >= min_bin_points
+
+                push!(x_bin, mean(x_raw[mask]))
+                push!(y_bin, mean(y_raw[mask]))
+
+            end
         end
 
-        x1 = x_master[j]
-        x2 = x_master[j+1]
+        
 
-        y1 = y_master[j]
-        y2 = y_master[j+1]
+        # --------------------------------------------------------
+        # Sort the binned points in increasing X
+        # --------------------------------------------------------
 
-        e1 = err_master[j]
-        e2 = err_master[j+1]
+        order = sortperm(x_bin)
 
-        α = (x_clamped - x1) / (x2 - x1)
+        x_bin = x_bin[order]
+        y_bin = y_bin[order]
 
-        y = (1 - α) * y1 + α * y2
-        e = (1 - α) * e1 + α * e2
+        if length(x_bin) < 4
+            error("Too few populated bins to construct the master curve.")
+        end
 
-        return y, e
+        if any(diff(x_bin) .<= 0)
+            error("The binned X values must be strictly increasing.")
+        end
+
+        # --------------------------------------------------------
+        # Shape-preserving cubic interpolation
+        # --------------------------------------------------------
+
+        master_itp = extrapolate(
+            interpolate(
+                x_bin,
+                y_bin,
+                SteffenMonotonicInterpolation()), Interpolations.Flat())
+
+        return master_itp, x_bin, y_bin
     end
+
+    master_itp, x_master_bin, y_master_bin =
+    build_master_curve(
+        X,
+        Y,
+        shifts;
+        nbins=30
+    )
 
     # --------------------------------------------------------
     # Generate new synthetic data
@@ -230,36 +266,36 @@ function finite_time_scaling_sampling(
 
         K = K_new[i]
 
-        # Shift corresponding to this K
+        # Shape-preserving interpolation of a(K)
         aK = shift_from_K(K)
 
         for j in eachindex(t_vals)
 
-            # Scaling coordinate
-            x = X[1, j] + aK
+            # Position on the master scaling curve
+            x = X[1,j] + aK
 
-            # Synthetic master-curve value
-            Y_mean, Y_error = master_curve(x)
+            # Smooth master-curve interpolation
+            Y_mean = master_itp(x)
 
-            # Convert back from log(Λ)
+            # Convert back from ln(Lambda)
             Λ_mean = exp(Y_mean)
 
-            # Convert Λ back to <p²>
+            # Convert Lambda -> <p²>
             p2_mean = Λ_mean * t_vals[j]^(2/3)
 
-            # Typical relative experimental uncertainty
-            relative_error = median(Y_err[:, j])
+            # Typical experimental relative error
+            relative_error = median(Y_err[:,j])
 
             σp2 = p2_mean * relative_error
 
-            # Statistical realization
-            p2_new[i, j] =
+            # Add experimental noise
+            p2_new[i,j] =
                 max(
-                    p2_mean + randn(rng) * σp2,
+                    p2_mean + randn(rng)*σp2,
                     eps()
                 )
 
-            p2_err_new[i, j] = σp2
+            p2_err_new[i,j] = σp2
         end
     end
 
