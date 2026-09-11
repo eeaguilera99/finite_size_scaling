@@ -1,6 +1,6 @@
 include("fss_qkr3_timescaling.jl")
 include("fss_qrk3_timescaling_analysis.jl")
-using CSV, DataFrames, Plots, LaTeXStrings
+using CSV, DataFrames
 
 #a_s = "κ=0.87"
 a_s = 220
