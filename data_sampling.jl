@@ -158,14 +158,14 @@ function finite_time_scaling_sampling(
     shift_itp = extrapolate(
         interpolate(
             K_sorted,
-            shifts_sorted,
+            (1 ./ exp.( shifts_sorted)),
             SteffenMonotonicInterpolation()
         ),
         Interpolations.Flat()
     )
 
     function shift_from_K(K)
-        return shift_itp(K)
+        return log.(1 ./shift_itp(K))
     end
     
     function build_master_curve(X, Y, shifts; nbins=30, min_bin_points=2)
@@ -253,7 +253,7 @@ function finite_time_scaling_sampling(
         X,
         Y,
         shifts;
-        nbins=30
+        nbins=50
     )
 
     # --------------------------------------------------------

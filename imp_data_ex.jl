@@ -28,7 +28,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 D = 3  # spatial dimension
-transient = 1
+transient = 5
 data_type = "Ex"
 
 #Scaling data
