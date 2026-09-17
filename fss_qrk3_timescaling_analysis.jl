@@ -5,15 +5,16 @@ using LsqFit
 
 #plotting function for raw and collapsed data
 function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, save=false)
-    if plot_label_b == true
-        plot_label = "K="*string(round(K, digits=3))
-    else
-        plot_label = ""
-    end
+
     if raw == true
         plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
             xlabel=latexstring("\$\\ln(N_p^{-1/d})\$"), ylabel=latexstring("\$ \\ln (Λ)\$"))
         for (i,K) in enumerate(K_vals)
+            if plot_label_b == true
+                plot_label = "K="*string(round(K, digits=3))
+            else
+                plot_label = ""
+            end
             plot!(plt1, X[:], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
         if save == true
@@ -27,10 +28,20 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
         xlabel=latexstring("\$\\ln(\\xi/N_p^{1/d})\$"), ylabel=latexstring("\$\\ln(\\Lambda)\$"))
     if ploterr == true
         for (i,K) in enumerate(K_vals)
+            if plot_label_b == true
+                plot_label = "K="*string(round(K, digits=3))
+            else
+                plot_label = ""
+            end
             plot!(plt2, X[:] .+ shifts[i], Y[i,:], yerror=Yerr[i,:], marker=:o, label=plot_label)
         end
     else
         for (i,K) in enumerate(K_vals)
+            if plot_label_b == true
+                plot_label = "K="*string(round(K, digits=3))
+            else
+                plot_label = ""
+            end
             plot!(plt2, X[:] .+ shifts[i], Y[i,:], marker=:o, label=plot_label)
         end
     end
