@@ -32,7 +32,7 @@ transient = 5
 data_type = "Ex"
 
 #Scaling data
-X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
+#X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
 
 #Scaling variance optimizaztion
 #shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)

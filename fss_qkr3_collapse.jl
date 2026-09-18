@@ -20,13 +20,18 @@ Perform finite-time scaling collapse of Anderson transition data.
 - `(X, Y)`: Arrays of logarithmic coordinates.
 """
 
+#filter transient data
+t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=transient)
+""" Experimental data has a transients from where kicking takes effect. We firlter out this data to analyse new simulated data for
+earlier times"""
+
 #sampling data
-t_vals_new = generate_sampling_t(t_vals; t_early=10, Δt=50)
+t_vals_new = generate_sampling_t(t_vals; t_early=200, Δt=25)
 K_vals_sampled, t_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; Kc_input=1.191, N_new=10, ΔK=0.06, t_new=t_vals_new)
 
 #Scaling data
-X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
-X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals_sampled, p2_sampled, p2_err_sampled; d=D, n_kicks_i=1, n_kicks_f=0)
+X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=1)
+X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals_sampled, p2_sampled, p2_err_sampled; d=D, n_kicks_i=1)
 
 
 #Scaling variance optimizaztion
@@ -80,7 +85,7 @@ in_new = indexin(setdiff(K_vals_sampled, K_vals), K_vals_sampled) #get index of 
 Y_data_sampled_new = Y_data_sampled[in_new, :] #get Y values for new K values
 plt2 =  plot(title=latexstring("New simulated data, \$d=$(D)\$"), xlabel=L"\ln N^{1/d}", ylabel=L"\ln Λ")
 plot!(plt2, repeat(X_data_sampled, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
-scatter!(plt2, repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
+scatter!(plt2, repeat(X_data_sampled, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
 xlims!(plt2, xlims(plt1))
 ylims!(plt2, ylims(plt1))
 display(plt2)
