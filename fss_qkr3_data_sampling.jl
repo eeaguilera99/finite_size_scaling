@@ -75,19 +75,24 @@ function estimate_Kc_from_slopes(K_vals, X, Y)
     return Kc_est, slopes
 end
 
+function estimate_delta_k(K_Vals; Kc_input=nothing)
+    #estimate interval to sample around Kc
+    if Kc_input === nothing
+        Kc, _ = estimate_Kc_from_slopes(K_Vals, X, Y)
+    else
+        Kc = Kc_input
+    end
+    #closes value in K_vals to Kc
+    Kc_index = argmin(abs.(K_Vals .- Kc))
+    ΔK = K_Vals[Kc_index + 1] - K_Vals[Kc_index-1]
 
-
+    return ΔK
+end
 # ============================================================
 # Generate new K values around Kc
 # ============================================================
-function generate_sampling_K(
-    Kc,
-    ΔK,
-    n_new,
-    K_min,
-    K_max
-)
 
+function generate_sampling_K(Kc, ΔK, n_new, K_min, K_max)
     if n_new == 0
         return Float64[]
     end
@@ -116,8 +121,6 @@ function generate_sampling_K(
 
     return K_new
 end
-
-
 
 # ============================================================
 # Build one branch of the empirical master curve
@@ -332,7 +335,6 @@ function build_inverse_xi_interpolation(
         Interpolations.Line()
     )
 
-
     return q_itp
 end
 
@@ -346,9 +348,9 @@ function finite_time_scaling_sampling(
     t_vals,
     p2_mat,
     p2_err_mat;
-    critic_estimate=true,
+    critic_estimate=false,
     Kc_input=nothing,
-    ΔK=0.02,
+    ΔK=nothing,
     N_new=10,
     master_nbins=30,
     rng=Random.default_rng()
@@ -366,6 +368,9 @@ function finite_time_scaling_sampling(
         )
 
 
+    if ΔK === nothing
+        ΔK = estimate_delta_k(K_vals; Kc_input=Kc_input)
+    end
     # --------------------------------------------------------
     # Estimate or specify Kc
     # --------------------------------------------------------
@@ -450,10 +455,10 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
 
     loc_mask =
-        K_vals .< Kc
+        K_vals .<= Kc
 
     diff_mask =
-        K_vals .> Kc
+        K_vals .>= Kc
 
 
     if count(loc_mask) < 2
@@ -485,7 +490,12 @@ function finite_time_scaling_sampling(
             K_vals[diff_mask],
             shifts[diff_mask]
         )
-
+    #=    
+    plt1 = plot(title=latexstring("ξ(K) interpolation, \$d=$(D)\$"), xlabel=L"κ", ylabel=L"ξ")
+    plot!(plt1, K_vals[loc_mask], log.(1 ./ q_loc_itp.(K_vals[loc_mask])), label="Original data (localized)", color=:blue)
+    plot!(plt1, K_vals[diff_mask], log.(1 ./ q_diff_itp.(K_vals[diff_mask])), label="Original data (diffusive)", color=:green)
+    display(plt1)
+    =#
 
     # --------------------------------------------------------
     # Convert interpolated q(K)=1/xi back into shift:

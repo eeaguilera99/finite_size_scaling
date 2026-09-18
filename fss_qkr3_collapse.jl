@@ -21,7 +21,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 #sampling data
-K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.191, N_new=5, ΔK=0.06)
+K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; Kc_input=1.191, N_new=16, ΔK=0.03)
 
 #Scaling data
 X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
@@ -29,7 +29,7 @@ X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_v
 
 
 #Scaling variance optimizaztion
-#shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
+shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
 #_, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
 #collapse
@@ -83,4 +83,8 @@ scatter!(plt2, repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="")
 xlims!(plt2, xlims(plt1))
 ylims!(plt2, ylims(plt1))
 display(plt2)
+plt3 =  plot(title=latexstring("Localization length, \$d=$(D)\$"), xlabel=L"κ", ylabel=L"ξ")
+scatter!(plt3, K_vals, exp.(shifts_data), ms=6, label="")
+scatter!(plt3, K_vals_sampled[in_new], exp.(shifts_data_sampled[in_new]), ms=6, label="Sampled data", color=:red)
+display(plt3)
 ##
