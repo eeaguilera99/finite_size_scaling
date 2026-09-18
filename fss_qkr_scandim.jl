@@ -1,5 +1,5 @@
 include("fss_qkr3_timescaling.jl")
-include("fss_qrk3_timescaling_analysis.jl")
+include("fss_qkr3_timescaling_analysis.jl")
 using CSV, DataFrames, Plots, LaTeXStrings
 
 
@@ -12,7 +12,7 @@ p2_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_matrix.csv", DataFrame; header=false)
 p2_err_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     
 #code to loop over dimension values for best collapse
 
-d_vals = 1:0.5:10
+d_vals = 1:0.5:15
 V_guess = [1, 1, 1.2, 0.5, -20, 0.1]
 transient = 5
 

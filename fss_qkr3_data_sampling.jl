@@ -1,5 +1,5 @@
 include("fss_qkr3_timescaling.jl")
-include("fss_qrk3_timescaling_analysis.jl")
+include("fss_qkr3_timescaling_analysis.jl")
 using Interpolations
 
 # ============================================================

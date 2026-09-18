@@ -1,6 +1,6 @@
 #include("imp_data_ex.jl")
 include("fss_qkr3_timescaling.jl")  # for finite_time_scaling
-include("fss_qrk3_timescaling_analysis.jl") 
+include("fss_qkr3_timescaling_analysis.jl") 
 
 
 

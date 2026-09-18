@@ -1,5 +1,6 @@
+##
 include("imp_data_ex.jl")
-include("data_sampling.jl")
+include("fss_qkr3_data_sampling.jl")
 
 
 """
@@ -20,7 +21,7 @@ Perform finite-time scaling collapse of Anderson transition data.
 """
 
 #sampling data
-K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.26, N_new=10, ΔK=0.02)
+K_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; critic_estimate=false, Kc_input=1.191, N_new=5, ΔK=0.06)
 
 #Scaling data
 X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, n_kicks_f=0)
@@ -40,7 +41,7 @@ X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_v
 shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
 _, shiftserr_data_sampled, _ = shifts_parametric_mc(t_vals, p2_sampled, p2_err_sampled; d=D, nbins=30, nmc=1000)
 
-perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", raw=false, d=D, save=false)
+perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", plot_label_b=false, raw=false, d=D, save=false)
 perform_collapse_quality(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled, s_rel_data_sampled, D, a_s, "Ex sampled"; Kc_offset=2, plotshow=false)
 Kc_offset_index = 0
  # index offset for initial Kc guess
@@ -71,14 +72,15 @@ CSV.write("logΛ_err_220_d=3.csv", df4)=#
 ##
 #compare original and sampled data
 plt1 =  plot(title=latexstring("Og data, \$d=$(D)\$"), xlabel=L"\ln N^{1/d}", ylabel=L"\ln Λ")
-plot!(plt1,repeat(X_data, length(K_vals),1)', Y_data', label="")
-scatter!(plt1,repeat(X_data, length(K_vals),1)', Y_data', label="") #Plot orginal data not scaled
+plot!(plt1, repeat(X_data, length(K_vals),1)', Y_data', label="")
+scatter!(plt1, repeat(X_data, length(K_vals),1)', Y_data', label="") #Plot orginal data not scaled
 display(plt1)
 in_new = indexin(setdiff(K_vals_sampled, K_vals), K_vals_sampled) #get index of new K values in sampled data
 Y_data_sampled_new = Y_data_sampled[in_new, :] #get Y values for new K values
-plt2 =  plot(title=latexstring("New sampled data, \$d=$(D)\$"), xlabel=L"\ln N^{1/d}", ylabel=L"\ln Λ")
-plot!(plt2,repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
-scatter!(plt2,repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
+plt2 =  plot(title=latexstring("New simulated data, \$d=$(D)\$"), xlabel=L"\ln N^{1/d}", ylabel=L"\ln Λ")
+plot!(plt2, repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
+scatter!(plt2, repeat(X_data, length(in_new),1)', Y_data_sampled_new', label="") #plot sampled data not scaled
 xlims!(plt2, xlims(plt1))
 ylims!(plt2, ylims(plt1))
 display(plt2)
+##
