@@ -158,10 +158,10 @@ function finite_time_scaling_sampling(
     shift_itp = extrapolate(
         interpolate(
             K_sorted,
-            (1 ./ exp.( shifts_sorted)),
+            (1 ./ exp.(shifts_sorted)),
             SteffenMonotonicInterpolation()
         ),
-        Interpolations.Flat()
+        Interpolations.Line()
     )
 
     function shift_from_K(K)
@@ -243,18 +243,22 @@ function finite_time_scaling_sampling(
             interpolate(
                 x_bin,
                 y_bin,
-                SteffenMonotonicInterpolation()), Interpolations.Flat())
+                SteffenMonotonicInterpolation()), Interpolations.Line())
 
-        return master_itp, x_bin, y_bin
+        return master_itp
     end
 
-    master_itp, x_master_bin, y_master_bin =
+    master_itp =
     build_master_curve(
         X,
         Y,
         shifts;
         nbins=50
     )
+    
+    #diagnostic plot of master curve
+    #plt1 =plot(X .+ shifts, master_itp.(X .+ shifts), label="", xlabel=L"\ln(N_p^{-1/d})", ylabel=L"\ln Λ", title="Master curve construction")
+    #display(plt1)
 
     # --------------------------------------------------------
     # Generate new synthetic data
@@ -332,6 +336,7 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
     # Return complete dataset
     # --------------------------------------------------------
+    println("Data sampling generated around Kc = $Kc with ΔK = $ΔK and N_new = $N_actual.")
 
     return K_total, p2_total, p2_err_total
 end
