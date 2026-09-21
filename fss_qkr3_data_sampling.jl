@@ -282,7 +282,8 @@ function finite_time_scaling_sampling(
 
     all(e -> isfinite(e) && e >= 0, p2_err_mat) ||
         error("Errors must be finite and non-negative.")
-
+    # Treat nothing as disabling K sampling, just like zero.
+    N_new = isnothing(N_new) ? 0 : N_new
     (N_new isa Integer && N_new >= 0) ||
         error("N_new must be a non-negative integer.")
 
@@ -446,7 +447,7 @@ function finite_time_scaling_sampling(
     # --------------------------------------------------------
     # Construct the same TWO empirical master curves
     # --------------------------------------------------------
-    master_loc, x_loc_bin, y_loc_bin = build_master_curve_branch(
+    master_loc, _, _ = build_master_curve_branch(
         X,
         Y,
         shifts,
@@ -454,7 +455,7 @@ function finite_time_scaling_sampling(
         nbins=master_nbins
     )
 
-    master_diff, x_diff_bin, y_diff_bin = build_master_curve_branch(
+    master_diff, _, _ = build_master_curve_branch(
         X,
         Y,
         shifts,
