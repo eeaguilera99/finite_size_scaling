@@ -245,15 +245,19 @@ end
 # Always returns K_total, t_total, p2_total, p2_err_total.
 # ============================================================
 function finite_time_scaling_sampling(
-    K_vals, t_vals, p2_mat, p2_err_mat;
+    K_vals, t_vals, p2_mat, p2_err_mat; trans=2,
     critic_estimate=false,
     Kc_input=nothing,
     ΔK=nothing,
     N_new=10,
-    t_new=nothing,
+    t_new_early=nothing,
+    t_new_late=nothing,
+    Δt=50,
     master_nbins=30,
-    rng=Random.default_rng()
+    rng=MersenneTwister(1234)
 )
+
+    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=trans)
     M, N = length(K_vals), length(t_vals)
 
     M > 0 && N > 0 ||
@@ -286,6 +290,13 @@ function finite_time_scaling_sampling(
     N_new = isnothing(N_new) ? 0 : N_new
     (N_new isa Integer && N_new >= 0) ||
         error("N_new must be a non-negative integer.")
+
+
+    if (t_new_early !==nothing) || (t_new_late !== nothing)
+        t_new = generate_sampling_t(t_vals; t_early=t_new_early, t_late=t_new_late, Δt=Δt)
+    else
+        t_new = nothing
+    end
 
     # --------------------------------------------------------
     # Final time grid and mapping back to measured columns
@@ -621,7 +632,7 @@ function finite_time_scaling_sampling(
             "t_new = nothing, Δt = nothing."
         )
     end
-
+    
 
     return K_total, t_total, p2_total, p2_err_total
 end
