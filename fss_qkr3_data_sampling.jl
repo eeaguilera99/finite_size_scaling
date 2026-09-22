@@ -610,7 +610,7 @@ function finite_time_scaling_sampling(
     println(
         "Data sampling generated around Kc = $Kc " *
         "with ΔK = $ΔK, N_new = $N_actual, " *
-        "and $(length(added_time_indices)) new time points."
+        "t_new = $t_new , Δt = $Δt."
     )
 
     return K_total, t_total, p2_total, p2_err_total
