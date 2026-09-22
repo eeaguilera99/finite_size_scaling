@@ -607,11 +607,21 @@ function finite_time_scaling_sampling(
     p2_total = p2_total[order_total, :]
     p2_err_total = p2_err_total[order_total, :]
 
-    println(
+    if t_new !== nothing
+            Δt = t_new[2] - t_new[1]
+                println(
         "Data sampling generated around Kc = $Kc " *
         "with ΔK = $ΔK, N_new = $N_actual, " *
-        "t_new = $t_new , Δt = $Δt."
+        "t_new = [$(t_new[1]) - $(t_new[end])], Δt = $Δt."
     )
+    else
+        println(
+            "Data sampling generated around Kc = $Kc " *
+            "with ΔK = $ΔK, N_new = $N_actual, " *
+            "t_new = nothing, Δt = nothing."
+        )
+    end
+
 
     return K_total, t_total, p2_total, p2_err_total
 end
