@@ -257,16 +257,16 @@ function finite_time_scaling_sampling(
     rng=MersenneTwister(1234)
 )
 
-    t_vals, p2_mat, p2_err_mat = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=trans)
-    M, N = length(K_vals), length(t_vals)
+    tt, p2, p2_err = filter_Nkicks(t_vals, p2_mat, p2_err_mat; n_kicks_i=trans)
+    M, N = length(K_vals), length(tt)
 
     M > 0 && N > 0 ||
         error("K_vals and t_vals must not be empty.")
 
-    size(p2_mat) == (M, N) ||
+    size(p2) == (M, N) ||
         error("p2_mat must have size (length(K_vals), length(t_vals)).")
 
-    size(p2_err_mat) == (M, N) ||
+    size(p2_err) == (M, N) ||
         error("p2_err_mat must have the same size as p2_mat.")
 
     all(isfinite, K_vals) ||
@@ -275,16 +275,16 @@ function finite_time_scaling_sampling(
     length(unique(K_vals)) == M ||
         error("K values must be distinct.")
 
-    all(t -> isfinite(t) && t > 0, t_vals) ||
+    all(t -> isfinite(t) && t > 0, tt) ||
         error("Times must be finite and positive.")
 
-    length(unique(t_vals)) == N ||
+    length(unique(tt)) == N ||
         error("Original times must be distinct.")
 
-    all(p -> isfinite(p) && p > 0, p2_mat) ||
+    all(p -> isfinite(p) && p > 0, p2) ||
         error("p2 values must be finite and positive.")
 
-    all(e -> isfinite(e) && e >= 0, p2_err_mat) ||
+    all(e -> isfinite(e) && e >= 0, p2_err) ||
         error("Errors must be finite and non-negative.")
     # Treat nothing as disabling K sampling, just like zero.
     N_new = isnothing(N_new) ? 0 : N_new
@@ -293,7 +293,7 @@ function finite_time_scaling_sampling(
 
 
     if (t_new_early !==nothing) || (t_new_late !== nothing)
-        t_new = generate_sampling_t(t_vals; t_early=t_new_early, t_late=t_new_late, Δt=Δt)
+        t_new = generate_sampling_t(tt; t_early=t_new_early, t_late=t_new_late, Δt=Δt)
     else
         t_new = nothing
     end
@@ -302,7 +302,7 @@ function finite_time_scaling_sampling(
     # Final time grid and mapping back to measured columns
     # --------------------------------------------------------
     if t_new === nothing
-        t_total = t_vals
+        t_total = tt
     else
         t_new isa AbstractVector ||
             error("t_new must be a vector or nothing.")
@@ -314,13 +314,13 @@ function finite_time_scaling_sampling(
             )
 
         t_total = sort!(unique(vcat(
-            collect(t_vals),
+            collect(tt),
             collect(t_new)
         )))
     end
 
     original_column = Dict(
-        t => j for (j, t) in enumerate(t_vals)
+        t => j for (j, t) in enumerate(tt)
     )
 
     old_columns = [
@@ -334,8 +334,8 @@ function finite_time_scaling_sampling(
         return (
             K_vals[order],
             t_total,
-            p2_mat[order, old_columns],
-            p2_err_mat[order, old_columns]
+            p2[order, old_columns],
+            p2_err[order, old_columns]
         )
     end
 
@@ -346,9 +346,9 @@ function finite_time_scaling_sampling(
     # Original scaling data; estimate or specify Kc
     # --------------------------------------------------------
     X, Y, Y_err = finite_time_scaling_data(
-        t_vals,
-        p2_mat,
-        p2_err_mat
+        tt,
+        p2,
+        p2_err
     )
 
     if critic_estimate
@@ -400,8 +400,8 @@ function finite_time_scaling_sampling(
         return (
             K_vals[order],
             t_total,
-            p2_mat[order, old_columns],
-            p2_err_mat[order, old_columns]
+            p2[order, old_columns],
+            p2_err[order, old_columns]
         )
     end
 
@@ -496,11 +496,11 @@ function finite_time_scaling_sampling(
     end
 
     if !isempty(added_time_indices)
-        order_t = sortperm(t_vals)
+        order_t = sortperm(tt)
 
         err_itp = extrapolate(
             interpolate(
-                collect(t_vals[order_t]),
+                collect(tt[order_t]),
                 rel_err_original[order_t],
                 SteffenMonotonicInterpolation()
             ),
@@ -536,8 +536,8 @@ function finite_time_scaling_sampling(
         j_old = old_columns[j]
 
         if j_old != 0
-            p2_total[1:M, j] .= p2_mat[:, j_old]
-            p2_err_total[1:M, j] .= p2_err_mat[:, j_old]
+            p2_total[1:M, j] .= p2[:, j_old]
+            p2_err_total[1:M, j] .= p2_err[:, j_old]
         end
     end
 
