@@ -351,6 +351,7 @@ function finite_time_scaling_sampling(
         p2_err
     )
 
+
     if critic_estimate
         Kc, _ = estimate_Kc_from_slopes(K_vals, X, Y)
     else
@@ -473,6 +474,7 @@ function finite_time_scaling_sampling(
         diff_mask;
         nbins=master_nbins
     )
+
 
     # --------------------------------------------------------
     # Experimental relative errors on the final time grid
@@ -632,7 +634,18 @@ function finite_time_scaling_sampling(
             "t_new = nothing, Δt = nothing."
         )
     end
-    
+    #plot interpolation shape
+    #=
+    X_interp, Y_interp, _ = finite_time_scaling_data(t_total, p2_total, p2_err_total)
+    shifts_interp, _ = finite_time_scaling(X_interp, Y_interp; nbins=50)
+
+    XX_loc =repeat(X_interp, length(shifts_interp[loc_mask])) .+ shifts_interp[loc_mask]
+    XX_diff = repeat(X_interp, length(shifts_interp[diff_mask])) .+ shifts_interp[diff_mask]
+    #println(shifts_interp[loc_mask])
+    plt1 = plot(title="Interpolated master curves", xlabel="ln(ξ/t^(1/3))", ylabel="ln(Λ)")
+    plot!(plt1, XX_loc , master_loc.(XX_loc), label="")
+    plot!(plt1, XX_diff, master_diff.(XX_diff), label="")
+    display(plt1)=#
 
     return K_total, t_total, p2_total, p2_err_total
 end
