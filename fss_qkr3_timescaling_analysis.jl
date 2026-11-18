@@ -227,7 +227,7 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
     #println("Slope error diff = $(round(err_diff, digits=4))")
     #println("Slope error loc = $(round(err_loc, digits=4))")
     println("Collapse tightness quality σ_rel = $(round(s_rel, digits=4))")
-end
+end 
 
 #critical Kc analysis from collapse shifts
 """
@@ -484,6 +484,40 @@ function perform_tevol_ln(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_i
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
 end
 
+function wagner_check(K_vals, k_c, k_d, p2, p2_err, t_vals, d; ν=0.5, transient=0)
+    #check if Wagner law holds: E(t) ~ t(k-k_c)^s at criticality
+   t_vals, p2, p2_err = filter_Nkicks(t_vals, p2, p2_err; n_kicks_i=transient)
+
+   #fit linear model
+   model(t, p) = t .* (k_d -  k_c) ^ p[1] + p[2] # y = m*x + b
+   guess = [(d-2)*ν, 0.0]  # Initial guess for [s, b]
+
+   k_d_index = indexin(k_d, K_vals)
+   p2_d = p2[k_d_index, :]
+   p2_err_d = p2_err[k_d_index, :]
+
+   fit = curve_fit(model, t_vals, p2_d, guess)
+   fit_params = coef(fit)
+   fit_errs = standard_errors(fit)
+   s_err = fit_errs[1]
+
+    #χ^2 goodness of fit
+    residuals = p2_d .- model(t_vals, fit_params)
+    χ2 = sum((residuals ./ p2_err_d).^2)
+    dof = length(t_vals) - length(fit_params)
+    χ2_red = χ2/dof
+
+    #plot
+    plt = plot(title=latexstring("Wagner law check for \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
+        xlabel="Time (kicks)", ylabel=latexstring("\$E(t, κ_D)\$"))
+    plot!(plt, t_vals, p2_d, marker=:o, label="", ms=3)
+    plot!(plt, t_vals, model(t_vals,fit_params), label=latexstring("\$s≈$(round(fit_params[1], digits=3)) ± $(round(s_err, digits=3))\$"))
+    display(plt)
+    println("Wagner law exponent s ≈ $(round(fit_params[1], digits=3)) ± $(round(s_err, digits=3))")
+    println("Expected s = (d-2)*ν = $(round((d-2)*ν, digits=3))")
+    println("χ2 red =", χ2_red)
+end
+    
 function perform_tevol_powerlaw(dime, shifts, t_vals, data_mat, data_mat_err; transient, Kc_offset_index=0, data_type="")
     
     #filter Nkicks range
