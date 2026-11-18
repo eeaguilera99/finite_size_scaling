@@ -12,16 +12,20 @@ p2_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_matrix.csv", DataFrame; header=false)
 p2_err_mat = Matrix(CSV.read("dataEX/$(a_s)/nc_err_matrix.csv", DataFrame; header=false))     
 #code to loop over dimension values for best collapse
 
-d_vals = 1:0.5:15
+
+
+d_vals = 1:100
 V_guess = [1, 1, 1.2, 0.5, -20, 0.1]
 transient = 5
+
 
 
 function dim_scan(d_values)
 
     collapse_quality = Float64[]
     for dim in d_values
-        _, sX = finite_time_scaling(X_data, Y_data; nbins=50, d=dim, n_kicks_i=transient)
+        X_data, Y_data, _ = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=dim, n_kicks_i=transient)
+        _, sX = finite_time_scaling(X_data, Y_data; nbins=50)
         push!(collapse_quality, sX)
     end
     best_idx = argmin(collapse_quality)
@@ -71,7 +75,7 @@ function dim_scan2(d_vals)
     display(plt_quality)
 end
 
-dim_scan2(d_vals)
+dim_scan(d_vals)
 
 function Kc_scan(d_values)
     Kc_values = Float64[]

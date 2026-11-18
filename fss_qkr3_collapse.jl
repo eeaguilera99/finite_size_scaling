@@ -27,19 +27,18 @@ earlier times"""
 
 #sampling data
 K_vals_sampled, t_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; 
-trans=transient, Kc_input=1.191, N_new=10, ΔK=0.06, t_new_early=nothing, Δt=25)
+trans=transient, Kc_input=1.191, N_new=nothing, ΔK=0.06, t_new_early=10, Δt=25)
 
 #Scaling data
 X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient)
 X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals_sampled, p2_sampled, p2_err_sampled; d=D)
-
 
 #Scaling variance optimizaztion
 shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
 #_, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
 #collapse
-#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
+perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=true, d=D, save=false)
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
 #sampled collapse
@@ -47,10 +46,10 @@ shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
 shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
 _, shiftserr_data_sampled, _ = shifts_parametric_mc(t_vals_sampled, p2_sampled, p2_err_sampled; d=D, nbins=30, nmc=1000)
 
-perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", plot_label_b=false, raw=false, d=D, save=false)
-perform_collapse_quality(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled, s_rel_data_sampled, D, a_s, "Ex sampled"; Kc_offset=2, plotshow=false)
+perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", plot_label_b=false, raw=true, d=D, save=false)
+perform_collapse_quality(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled, s_rel_data_sampled, D, a_s, "Ex sampled"; Kc_offset=1, plotshow=false)
 
-##
+
 Kc_offset_index = 0
  # index offset for initial Kc guess
 fit_k_filter = 0 # number of low-K points to exclude from fit
@@ -94,12 +93,15 @@ xlims!(plt2, xlims(plt1))
 ylims!(plt2, ylims(plt1))
 display(plt2)
 ##
-in_new_t = indexin(setdiff(t_vals_sampled, t_vals), t_vals_sampled) #get index of new t values in sampled data
+tt = t_vals[transient:end]
+in_new_t = indexin(setdiff(t_vals_sampled, tt), t_vals_sampled) #get index of new t values in sampled data
 plt3 = plot(title=latexstring("New simulated data in t, \$d=$(D)\$"), xlabel=L"\ln N^{1/d}", ylabel=L"\ln Λ")
 plot!(plt3, repeat(X_data, length(K_vals),1)', Y_data', label="") #plot sampled data not scaled
 scatter!(plt3, repeat(X_data, length(K_vals),1)', Y_data', label="") #plot sampled data not scaled
-plot!(plt3, repeat(X_data_sampled[in_new_t]', length(K_vals),1)', Y_data_sampled[:, in_new_t]', label="" ) #plot sampled data not scaled
-scatter!(plt3, repeat(X_data_sampled[in_new_t]', length(K_vals),1)', Y_data_sampled[:, in_new_t]', label="") #plot sampled data not scaled
+plot!(plt3, repeat(X_data_sampled[in_new_t]', length(K_vals),1)', Y_data_sampled[:, in_new_t]', label="", color=:red) #plot sampled data not scaled
+scatter!(plt3, repeat(X_data_sampled[in_new_t]', length(K_vals),1)', Y_data_sampled[:, in_new_t]', label="", color=:red) #plot sampled data not scaled
+#xlims!(plt3, xlims(plt1))
+#ylims!(plt3, ylims(plt1))
 display(plt3)
 ##
 plt4 =  plot(title=latexstring("Localization length, \$d=$(D)\$"), xlabel=L"κ", ylabel=L"ξ")
