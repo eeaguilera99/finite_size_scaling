@@ -489,53 +489,46 @@ function wagner_check(K_vals, k_c, p2, p2_err, t_vals, d; ν=0.5, transient=0, K
     t_vals, p2, p2_err = filter_Nkicks(t_vals, p2, p2_err; n_kicks_i=transient)
 
     #get K values of diffusive side
-    k_c_index = indexin(k_c, K_vals)
+    k_c_index = indexin(k_c, K_vals)[1]
     k_c_d = K_vals[k_c_index + Kc_offset_index] 
     # next K value after k_c
-    K_diff_mask = K_vals .> k_c_d
+    K_diff_mask = K_vals .>= k_c_d
     k_d = K_vals[K_diff_mask]
 
-    #Flatten data for fitting
     p2 = p2[K_diff_mask, :] 
     p2_err = p2_err[K_diff_mask, :]
 
-    #fit model
-    model(xy, p) =  xy[1,:] .* (xy[2,:] .- k_c_d) .^ p[1]  # y = A * t * (k-k_c)^s + b
-    guess = [(d-2)*ν]  # Initial guess for [A, s, b]   
-    fit = curve_fit(model, [t_vals'; k_d'], p2, guess)
-    fit_params = coef(fit)
-    fit_errs = standard_errors(fit)
+    #fit model for E(t, k) ~ t D(k) 
+    model(t, p) = p[1] .* t .+ p[2]  # y = m*x + b
+    guess_for_D = (k_d .- k_c).^((d-2)*ν)
+    fit = [curve_fit(model, t_vals, @view(p2[k_d_index, :]), [guess_for_D[k_d_index], 0.0]) for k_d_index in 1:length(k_d)]
+    params = [coef(fit[k_d_index]) for k_d_index in 1:length(k_d)]
+    errors = [standard_errors(fit[k_d_index]) for k_d_index in 1:length(k_d)]
+
+    #fit for D(k) = A * (k - k_c)^s
+    D_vals = [params[k_d_index][1] for k_d_index in 1:length(k_d)]
+    D_errs = [errors[k_d_index][1] for k_d_index in 1:length(k_d)]
+    model_D(k,p) = p[1] .* (k .- k_c_d).^p[2]
+    guess_for_D_fit = [1.0, (d-2)*ν]
+    fit_D = curve_fit(model_D, k_d, D_vals, guess_for_D_fit)
+    fit_params_D = coef(fit_D)
+    fit_errs_D = standard_errors(fit_D)  
 
 
 
-   #fit linear model
-   model(t, p) = t .* (k_d -  k_c) ^ p[1] + p[2] # y = m*x + b
-   guess = [(d-2)*ν, 0.0]  # Initial guess for [s, b]
-
-   k_d_index = indexin(k_d, K_vals)
-   p2_d = p2[k_d_index, :]
-   p2_err_d = p2_err[k_d_index, :]
-
-   fit = curve_fit(model, t_vals, p2_d, guess)
-   fit_params = coef(fit)
-   fit_errs = standard_errors(fit)
-   s_err = fit_errs[1]
-
-    #χ^2 goodness of fit
-    residuals = p2_d .- model(t_vals, fit_params)
-    χ2 = sum((residuals ./ p2_err_d).^2)
-    dof = length(t_vals) - length(fit_params)
-    χ2_red = χ2/dof
-
-    #plot
-    plt = plot(title=latexstring("Wagner law check for \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
-        xlabel="Time (kicks)", ylabel=latexstring("\$E(t, κ_D)\$"))
-    plot!(plt, t_vals, p2_d, marker=:o, label="", ms=3)
-    plot!(plt, t_vals, model(t_vals,fit_params), label=latexstring("\$s≈$(round(fit_params[1], digits=3)) ± $(round(s_err, digits=3))\$"))
+    #plot D(k)
+    plt = plot(title=latexstring("Wagner law check for \$d=$(d)\$, \$ν=$(ν)\$, \$a_s=$(a_s)a_0\$"),
+        xlabel=latexstring("κ"), ylabel=latexstring("D(κ)"))
+    plot!(plt, k_d, D_vals, yerror=D_errs, marker=:o, label="data", ms=3)
+    plot!(plt, k_d, model_D(k_d, fit_params_D), label=latexstring("Fit: D(κ) = \$A(κ - κ_c)^s\$"), linewidth=2) 
     display(plt)
-    println("Wagner law exponent s ≈ $(round(fit_params[1], digits=3)) ± $(round(s_err, digits=3))")
-    println("Expected s = (d-2)*ν = $(round((d-2)*ν, digits=3))")
-    println("χ2 red =", χ2_red)
+
+    #Compare fitted s with theoretical value
+    s_fit = fit_params_D[2] 
+    s_theory = (d-2)*ν
+    println("Fitted s: $(round(s_fit, digits=3)) +- $(round(fit_errs_D[2], digits=3))")
+    println("Theoretical s: $(round(s_theory, digits=3))")
+    println("Relative error: $(round(100*abs(1 - s_theory/s_fit), digits=3))%")
 end
     
 function perform_tevol_powerlaw(dime, shifts, t_vals, data_mat, data_mat_err; transient, Kc_offset_index=0, data_type="")

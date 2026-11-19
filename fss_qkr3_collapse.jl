@@ -26,35 +26,39 @@ Perform finite-time scaling collapse of Anderson transition data.
 earlier times"""
 
 #sampling data
-K_vals_sampled, t_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; 
-trans=transient, Kc_input=1.191, N_new=nothing, ΔK=0.06, t_new_early=10, Δt=25)
+#K_vals_sampled, t_vals_sampled, p2_sampled, p2_err_sampled = finite_time_scaling_sampling(K_vals, t_vals, p2_mat, p2_err_mat; 
+#trans=transient, Kc_input=1.191, N_new=nothing, ΔK=0.06, t_new_early=10, Δt=25)
 
 #Scaling data
 X_data, Y_data, Yerr_data = finite_time_scaling_data(t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient)
-X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals_sampled, p2_sampled, p2_err_sampled; d=D)
+#X_data_sampled, Y_data_sampled, Yerr_data_sampled = finite_time_scaling_data(t_vals_sampled, p2_sampled, p2_err_sampled; d=D)
 
 #Scaling variance optimizaztion
 shifts_data, s_rel_data = finite_time_scaling(X_data, Y_data; nbins=50)
 #_, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbins=30, nmc=1000)
 
 #collapse
-perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=true, d=D, save=false)
+#perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
 #perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=2, plotshow=false)
 
 #sampled collapse
 
-shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
-_, shiftserr_data_sampled, _ = shifts_parametric_mc(t_vals_sampled, p2_sampled, p2_err_sampled; d=D, nbins=30, nmc=1000)
+#shifts_data_sampled, s_rel_data_sampled = finite_time_scaling(X_data_sampled, Y_data_sampled; nbins=50)
+#_, shiftserr_data_sampled, _ = shifts_parametric_mc(t_vals_sampled, p2_sampled, p2_err_sampled; d=D, nbins=30, nmc=1000)
 
-perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", plot_label_b=false, raw=true, d=D, save=false)
-perform_collapse_quality(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled, s_rel_data_sampled, D, a_s, "Ex sampled"; Kc_offset=1, plotshow=false)
+#perform_collapse(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled; data_type="Ex sampled", plot_label_b=false, raw=true, d=D, save=false)
+#perform_collapse_quality(K_vals_sampled, X_data_sampled, Y_data_sampled, Yerr_data_sampled, shifts_data_sampled, s_rel_data_sampled, D, a_s, "Ex sampled"; Kc_offset=1, plotshow=false)
 
-
-Kc_offset_index = 0
+#Kc analysis: Plotting localization length ξ(K) and fitting to find Kc
+#Kc_offset_index = 0
  # index offset for initial Kc guess
-fit_k_filter = 0 # number of low-K points to exclude from fit
-Kc_1_sampled = perform_Kc_anal(shifts_data_sampled, shiftserr_data_sampled, K_vals_sampled; data_type="Ex sampled", d=D, n_k_filter=fit_k_filter, K_guess_index=Kc_offset_index, show_xierr=false, save=false)[4]
+#fit_k_filter = 0 # number of low-K points to exclude from fit
+#Kc_1_sampled = perform_Kc_anal(shifts_data_sampled, shiftserr_data_sampled, K_vals_sampled; data_type="Ex sampled", d=D, n_k_filter=fit_k_filter, K_guess_index=Kc_offset_index, show_xierr=false, save=false)[4]
 #monte_carlo_sampling(K_vals, t_vals, p2_mat, p2_err_mat; d=D, n_kicks_i=transient, nbins=30, nmc=1000)
+
+#Perform Wagner law check
+wagner_check(K_vals, K_vals[argmax(shifts_data)], p2_mat, p2_err_mat, t_vals, D; ν=0.7, transient=transient)
+
 ##
 #Scalling collapse Taylor fitting
 #V_guess = [1, 0.1, 0.8, 1, -20, 10] #(b1, b2, Kc, ν, F00, ξsat)
@@ -75,7 +79,7 @@ CSV.write("logξ_220_d=3.csv", df3)
 
 df4 = DataFrame(Yerr', :auto)
 CSV.write("logΛ_err_220_d=3.csv", df4)
-=#
+
 
 ##
 #compare original and sampled data
@@ -109,3 +113,4 @@ scatter!(plt4, K_vals, exp.(shifts_data), ms=6, label="")
 scatter!(plt4, K_vals_sampled[in_new_k], exp.(shifts_data_sampled[in_new_k]), ms=6, label="Sampled data", color=:red)
 display(plt4)
 ##
+=#
