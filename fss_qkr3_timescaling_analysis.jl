@@ -484,9 +484,29 @@ function perform_tevol_ln(d, shifts, t_vals, data_mat, data_mat_err; Kc_offset_i
     println("Approximate dimension from fit: d ≈ $(round(2/fit_params1[1], digits=3)) ± $(round(2*α_err/fit_params1[1]^2, digits=3))")
 end
 
-function wagner_check(K_vals, k_c, k_d, p2, p2_err, t_vals, d; ν=0.5, transient=0)
+function wagner_check(K_vals, k_c, p2, p2_err, t_vals, d; ν=0.5, transient=0, Kc_offset_index=0)
     #check if Wagner law holds: E(t) ~ t(k-k_c)^s at criticality
-   t_vals, p2, p2_err = filter_Nkicks(t_vals, p2, p2_err; n_kicks_i=transient)
+    t_vals, p2, p2_err = filter_Nkicks(t_vals, p2, p2_err; n_kicks_i=transient)
+
+    #get K values of diffusive side
+    k_c_index = indexin(k_c, K_vals)
+    k_c_d = K_vals[k_c_index + Kc_offset_index] 
+    # next K value after k_c
+    K_diff_mask = K_vals .> k_c_d
+    k_d = K_vals[K_diff_mask]
+
+    #Flatten data for fitting
+    p2 = p2[K_diff_mask, :] 
+    p2_err = p2_err[K_diff_mask, :]
+
+    #fit model
+    model(xy, p) =  xy[1,:] .* (xy[2,:] .- k_c_d) .^ p[1]  # y = A * t * (k-k_c)^s + b
+    guess = [(d-2)*ν]  # Initial guess for [A, s, b]   
+    fit = curve_fit(model, [t_vals'; k_d'], p2, guess)
+    fit_params = coef(fit)
+    fit_errs = standard_errors(fit)
+
+
 
    #fit linear model
    model(t, p) = t .* (k_d -  k_c) ^ p[1] + p[2] # y = m*x + b
