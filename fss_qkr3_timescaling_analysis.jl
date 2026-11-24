@@ -216,16 +216,16 @@ function perform_collapse_quality(K_vals, X, Y, Y_err, shifts, s_rel, d, a_s, da
         display(plt)
     end
 
-    println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s) =====")
+    println("\n===== Collapse fit quality $(data_type), d=$(d), a_s=$(a_s), Kc_offset=$(Kc_offset) =====")
     println("χ2 red avg = $(round((χ2_red_diff + χ2_red_loc)/2, digits=4))")
-    #println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
-    #println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
+    println("χ2 red diff = $(round(χ2_red_diff, digits=4))")
+    println("χ2 red loc = $(round(χ2_red_loc, digits=4))")
     println("R² avg = $(round((R2_diff + R2_loc)/2, digits=4))")
-    #println("R² diff = $(round(R2_diff, digits=4))")
-    #println("R² loc = $(round(R2_loc, digits=4))")
+    println("R² diff = $(round(R2_diff, digits=4))")
+    println("R² loc = $(round(R2_loc, digits=4))")
     println("Slope err avg = $(round((err_diff + err_loc)/2, digits=4))")  
-    #println("Slope error diff = $(round(err_diff, digits=4))")
-    #println("Slope error loc = $(round(err_loc, digits=4))")
+    println("Slope error diff = $(round(err_diff, digits=4))")
+    println("Slope error loc = $(round(err_loc, digits=4))")
     println("Collapse tightness quality σ_rel = $(round(s_rel, digits=4))")
 end 
 
@@ -508,7 +508,7 @@ function wagner_check(K_vals, k_c, p2, p2_err, t_vals, d; ν=0.5, transient=0, K
     #fit for D(k) = A * (k - k_c)^s
     D_vals = [params[k_d_index][1] for k_d_index in 1:length(k_d)]
     D_errs = [errors[k_d_index][1] for k_d_index in 1:length(k_d)]
-    model_D(k,p) = p[1] .* (k .- k_c_d).^p[2]
+    model_D(k,p) = p[1] .* (k .- k_c).^ abs(p[2])  # D(k) = A * (k - k_c)^s + offset
     guess_for_D_fit = [1.0, (d-2)*ν]
     fit_D = curve_fit(model_D, k_d, D_vals, guess_for_D_fit)
     fit_params_D = coef(fit_D)

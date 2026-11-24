@@ -231,6 +231,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, X, Y, Yerr, d, V_gue
                     [K_fit[valid]'; t_fit[valid]'],
                     pbest
                 )
+    RSS = sum(residuals .^ 2)
 
     χ2 = sum((residuals ./ Yerr_fit[valid]).^2)
 
@@ -249,7 +250,7 @@ function finite_time_scaling2(K_vals, t_vals, mat, err_mat, X, Y, Yerr, d, V_gue
         end
     end
 
-    return pbest, perr, logxi, χ2, χ2_red
+    return pbest, perr, logxi, χ2, χ2_red, RSS
 end
 
 # Function to perform parametric bootstrap for shift uncertainties
