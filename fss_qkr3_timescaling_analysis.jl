@@ -4,7 +4,7 @@ using LaTeXStrings
 using LsqFit
 
 #plotting function for raw and collapsed data
-function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, save=false)
+function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_type="", plot_label_b=false, ploterr=true, save=false, save_data=false)
 
     if raw == true
         plt1 = plot(title=latexstring("Raw data $(data_type) \$d=$(d)\$, \$a_s=$(a_s)a_0\$"),
@@ -48,6 +48,20 @@ function perform_collapse(K_vals, X, Y, Yerr, shifts; raw=false, d=dim, data_typ
     if save == true
         savefig(plt2, "C:\\Users\\c7041417\\Documents\\Julia\\QKR\\finite_size_scaling\\plots\\Ex\\fss_collapsed_data_d=$(d)_a=$(a_s).pdf")
     end
+    if save_data == true
+        df1 = DataFrame(Y, :auto)
+        CSV.write("logΛ_$(a_s)_d=$(d).csv", df1)
+
+        df2 = DataFrame(X, :auto)
+        CSV.write("logN^1d_$(a_s)_d=$(d).csv", df2)
+
+        df3 = DataFrame(shifts', :auto)
+        CSV.write("logξ_$(a_s)_d=$(d).csv", df3)
+
+        df4 = DataFrame(Yerr', :auto)
+        CSV.write("logΛ_err_$(a_s)_d=$(d).csv", df4)
+    end
+
     display(plt2)
 end
 
@@ -288,7 +302,7 @@ function fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=0, K_val_g=0, exclud
 end
 
 
-function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true, save=false)
+function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filter=0, K_guess_index=0, show_xierr=true, save=false, save_data=false)
     xi = exp.(shifts)
     xierr = xi.*shifts_err
     results = fit_xi_offset_LsqFit(K_vals, xi, xierr; n_k_filter=n_k_filter, K_val_g=K_guess_index)
@@ -312,6 +326,20 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
     if save == true
         savefig(plt_fit1, "plots\\Ex\\Kc_fit_$(data_type)_d=$(d)_a=$(a_s).pdf")
     end
+    if save_data == true
+        d1 = DataFrame(xi', :auto)
+        CSV.write("ξ(k)_data_220.csv", d1)
+
+        d2 = DataFrame(ξfit', :auto)
+        CSV.write("ξ(k)_data_fit_220.csv", d2)
+
+        d3 = DataFrame(Kgrid', :auto)
+        CSV.write("Kvals_ξfit_220.csv", d3)
+
+        d4 = DataFrame(xierr', :auto)
+        CSV.write("ξerr(k)_data_220.csv", d4)
+    end
+
     display(plt_fit1)
 
     println("\n===== Critical fit $(data_type) d=$(d), a_s=$(a_s), κ_c_offset=$(K_guess_index) =====")
@@ -320,7 +348,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
     println("A1   ≈ $(round(results.A, digits=3))   ± $(round(results.err_A, digits=3))")
     println("β_01  ≈ $(round(results.β0, digits=3))  ± $(round(results.err_β0, digits=3))")
     println("χ²1  = $(round(results.χ2, digits=3)),  χ²_red1 = $(round(results.χ2_red, digits=3))")
-    return results
+    return results.Kc
 end
 
 #slopes analysis

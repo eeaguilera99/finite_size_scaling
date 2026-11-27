@@ -39,7 +39,7 @@ _, shiftserr_data, _ = shifts_parametric_mc(t_vals, p2_mat, p2_err_mat; d=D, nbi
 
 #collapse
 perform_collapse(K_vals, X_data, Y_data, Yerr_data, shifts_data; data_type=data_type, raw=false, d=D, save=false)
-perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=4, plotshow=true)
+perform_collapse_quality(K_vals, X_data, Y_data, Yerr_data, shifts_data, s_rel_data, D, a_s, data_type; Kc_offset=4, plotshow=false)
 
 #sampled collapse
 
@@ -67,21 +67,6 @@ V_guess = [1, 1, 1.2, 0.5, -20, 1] #(b1, b2, Kc, ν, F00, ξsat)
 pbest, perr, shifts_data, χ2, χ2_red, RSS = finite_time_scaling2(K_vals, t_vals, p2_mat, p2_err_mat, X_data, Y_data, Yerr_data, D, V_guess; transient=transient)
 perform_collapse2(K_vals, X_data, Y_data, Yerr_data, shifts_data, χ2, χ2_red, pbest, perr, D, a_s; showxi=false)
 println("RSS = $(round(RSS, digits=4))")
-
-#=
-#write csv file with scaling data
-df1 = DataFrame(Y, :auto)
-CSV.write("logΛ_220_d=3.csv", df1)
-
-df2 = DataFrame(X, :auto)
-CSV.write("logN^1d_220_d=3.csv", df2)
-
-df3 = DataFrame(shifts', :auto)
-CSV.write("logξ_220_d=3.csv", df3)
-
-df4 = DataFrame(Yerr', :auto)
-CSV.write("logΛ_err_220_d=3.csv", df4)=#
-
 
 ##
 #=
