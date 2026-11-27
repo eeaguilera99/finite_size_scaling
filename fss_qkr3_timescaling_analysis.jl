@@ -330,7 +330,7 @@ function perform_Kc_anal(shifts, shifts_err, K_vals; data_type="", d=3, n_k_filt
         d1 = DataFrame(xi', :auto)
         CSV.write("ξ(k)_data_220.csv", d1)
 
-        d2 = DataFrame(ξfit', :auto)
+        d2 = DataFrame(ξfit1', :auto)
         CSV.write("ξ(k)_data_fit_220.csv", d2)
 
         d3 = DataFrame(Kgrid', :auto)
